@@ -2,7 +2,7 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "naming_series:",
- "creation": "2026-07-20 12:00:00.000000",
+ "creation": "2026-07-20 12:00:00",
  "description": "A physical cheque book: a bank account plus a contiguous range of pre-printed numbers",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -13,10 +13,10 @@
   "bank_account",
   "bank",
   "account",
-  "book_reference",
   "column_break_main",
   "status",
   "issue_date",
+  "book_reference",
   "numbering_section",
   "prefix",
   "starting_number",
@@ -270,10 +270,11 @@
    "link_fieldname": "cheque_book"
   }
  ],
- "modified": "2026-07-20 12:00:00.000000",
+ "modified": "2026-07-20 22:50:12.318267",
  "modified_by": "Administrator",
  "module": "ERP Core",
  "name": "Cheque Book",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -312,6 +313,7 @@
    "role": "Accounts User"
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],

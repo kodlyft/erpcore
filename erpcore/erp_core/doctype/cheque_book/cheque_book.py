@@ -19,6 +19,39 @@ def compose_cheque_no(prefix, number, padding_length, suffix):
 
 
 class ChequeBook(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		account: DF.Link | None
+		amended_from: DF.Link | None
+		bank: DF.Link | None
+		bank_account: DF.Link
+		book_reference: DF.Data | None
+		cleared_count: DF.Int
+		company: DF.Link
+		ending_number: DF.Int
+		first_cheque_no: DF.Data | None
+		generation_status: DF.Literal["Pending", "Queued", "In Progress", "Completed", "Failed"]
+		issue_date: DF.Date
+		issued_count: DF.Int
+		last_cheque_no: DF.Data | None
+		leaves_generated: DF.Int
+		naming_series: DF.Literal["CHQ-BK-.YYYY.-.####"]
+		number_of_leaves: DF.Int
+		padding_length: DF.Int
+		prefix: DF.Data | None
+		starting_number: DF.Int
+		status: DF.Literal["Draft", "Active", "Exhausted", "Closed", "Cancelled"]
+		suffix: DF.Data | None
+		unused_count: DF.Int
+		void_count: DF.Int
+	# end: auto-generated types
+
 	def validate(self):
 		self.set_defaults()
 		self.validate_numbering()
