@@ -1,0 +1,103 @@
+{
+ "app": "erpcore",
+ "charts": [],
+ "content": "[{\"id\":\"i1GumFOjiJ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cheque Book\",\"col\":3}},{\"id\":\"lGjxPqgxyC\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cheque Leaf\",\"col\":3}},{\"id\":\"YLHviXhpUB\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cheque Settings\",\"col\":3}},{\"id\":\"IUKDXo_6y6\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"a9I2CcL3Y1\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}}]",
+ "creation": "2026-07-20 22:57:49.384967",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "ERP Core",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Masters",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Cheque Book",
+   "link_count": 0,
+   "link_to": "Cheque Book",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Cheque Leaf",
+   "link_count": 0,
+   "link_to": "Cheque Leaf",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Cheque Settings",
+   "link_count": 0,
+   "link_to": "Cheque Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Cheque Void Reason",
+   "link_count": 0,
+   "link_to": "Cheque Void Reason",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-07-20 23:08:35.976665",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "ERP Core",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Cheque Book",
+   "link_to": "Cheque Book",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Cheque Leaf",
+   "link_to": "Cheque Leaf",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Cheque Settings",
+   "link_to": "Cheque Settings",
+   "type": "DocType"
+  }
+ ],
+ "title": "ERP Core",
+ "type": "Workspace"
+}
