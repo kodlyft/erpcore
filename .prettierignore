@@ -1,0 +1,10 @@
+node_modules
+build
+dist
+*.min.js
+*.min.css
+erpcore/public/dist
+erpcore/templates/includes
+erpcore/public/js/lib
+*.svg
+*.md

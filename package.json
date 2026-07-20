@@ -1,0 +1,25 @@
+{
+  "name": "erpcore",
+  "version": "0.0.1",
+  "description": "Core requirements for ERPNext, built on Frappe",
+  "author": "Kodlyft <hello@kodlyft.com>",
+  "license": "MIT",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kodlyft/erpcore.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kodlyft/erpcore/issues"
+  },
+  "homepage": "https://github.com/kodlyft/erpcore#readme",
+  "keywords": [
+    "erpcore",
+    "frappe",
+    "erpnext",
+    "core"
+  ],
+  "scripts": {
+    "prepare": "command -v pre-commit > /dev/null 2>&1 && pre-commit install && pre-commit install --hook-type commit-msg || true"
+  }
+}
