@@ -1,0 +1,103 @@
+{
+ "app": "erpcore",
+ "charts": [],
+ "content": "[{\"id\":\"v8eSj6xKqi\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cheque Book\",\"col\":3}},{\"id\":\"1rcokumIq2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cheque Leaf\",\"col\":3}},{\"id\":\"-YqkGb9e0f\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cheque Settings\",\"col\":3}},{\"id\":\"wdMlBaFaVT\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"OO3L3UHkcn\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}}]",
+ "creation": "2026-07-20 23:14:08.063316",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Cheque Management",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Masters",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Cheque Book",
+   "link_count": 0,
+   "link_to": "Cheque Book",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Cheque Leaf",
+   "link_count": 0,
+   "link_to": "Cheque Leaf",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Cheque Settings",
+   "link_count": 0,
+   "link_to": "Cheque Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Cheque Void Reason",
+   "link_count": 0,
+   "link_to": "Cheque Void Reason",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-07-20 23:18:37.691478",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Cheque Management",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Cheque Book",
+   "link_to": "Cheque Book",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Cheque Leaf",
+   "link_to": "Cheque Leaf",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Cheque Settings",
+   "link_to": "Cheque Settings",
+   "type": "DocType"
+  }
+ ],
+ "title": "Cheque Management",
+ "type": "Workspace"
+}

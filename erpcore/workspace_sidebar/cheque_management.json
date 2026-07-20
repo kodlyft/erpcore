@@ -1,0 +1,76 @@
+{
+ "app": "erpcore",
+ "creation": "2026-07-20 23:14:25.513078",
+ "docstatus": 0,
+ "doctype": "Workspace Sidebar",
+ "idx": 1,
+ "items": [
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "banknote",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Home",
+   "link_to": "Cheque Management",
+   "link_type": "Workspace",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "book",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Cheque Book",
+   "link_to": "Cheque Book",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "card",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Cheque Leaf",
+   "link_to": "Cheque Leaf",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "setting-gear",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Cheque Settings",
+   "link_to": "Cheque Settings",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "x",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Cheque Void Reason",
+   "link_to": "Cheque Void Reason",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-07-20 23:20:27.950464",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Cheque Management",
+ "owner": "Administrator",
+ "standard": 1,
+ "title": "Cheque Management"
+}

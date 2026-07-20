@@ -1,0 +1,21 @@
+{
+ "app": "erpcore",
+ "bg_color": "blue",
+ "creation": "2026-07-20 22:57:58.053161",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon_type": "Link",
+ "idx": 0,
+ "label": "ERP Core",
+ "link_to": "ERP Core",
+ "link_type": "Workspace Sidebar",
+ "modified": "2026-07-20 23:15:30.922004",
+ "modified_by": "Administrator",
+ "name": "ERP Core",
+ "owner": "Administrator",
+ "parent_icon": "",
+ "restrict_removal": 0,
+ "roles": [],
+ "standard": 1
+}
