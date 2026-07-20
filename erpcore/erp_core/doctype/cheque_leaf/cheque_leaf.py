@@ -19,6 +19,39 @@ from erpcore.erp_core.cheque_constants import (
 
 
 class ChequeLeaf(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		amount: DF.Currency
+		bank: DF.Link | None
+		bank_account: DF.Link | None
+		cheque_book: DF.Link
+		cheque_date: DF.Date | None
+		cheque_no: DF.Data
+		cheque_number: DF.Int
+		clearance_date: DF.Date | None
+		company: DF.Link | None
+		currency: DF.Link | None
+		issue_date: DF.Date | None
+		party: DF.DynamicLink | None
+		party_type: DF.Link | None
+		payee_name: DF.Data | None
+		printed_by: DF.Link | None
+		printed_on: DF.Datetime | None
+		reference_doctype: DF.Link | None
+		reference_name: DF.DynamicLink | None
+		status: DF.Literal["Unused", "Reserved", "Issued", "Cleared", "Bounced", "Stopped", "Void", "Lost"]
+		void_date: DF.Date | None
+		void_reason: DF.Link | None
+		void_remarks: DF.SmallText | None
+		voided_by: DF.Link | None
+	# end: auto-generated types
+
 	def autoname(self):
 		self.name = f"{self.cheque_book}-{self.cheque_no}"
 
