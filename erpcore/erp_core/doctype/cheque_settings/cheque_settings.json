@@ -1,6 +1,6 @@
 {
  "actions": [],
- "creation": "2026-07-20 12:00:00.000000",
+ "creation": "2026-07-20 12:00:00",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -35,7 +35,7 @@
    "non_negative": 1
   },
   {
-   "default": "500",
+   "default": "200",
    "description": "Guard against a typo creating a book with thousands of leaves.",
    "fieldname": "max_leaves_per_book",
    "fieldtype": "Int",
@@ -114,7 +114,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-07-20 12:00:00.000000",
+ "modified": "2026-07-20 22:46:50.134522",
  "modified_by": "Administrator",
  "module": "ERP Core",
  "name": "Cheque Settings",
@@ -145,6 +145,7 @@
    "role": "Accounts User"
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []
