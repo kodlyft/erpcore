@@ -1,0 +1,151 @@
+{
+ "actions": [],
+ "creation": "2026-07-20 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "numbering_section",
+  "default_padding_length",
+  "max_leaves_per_book",
+  "column_break_numbering",
+  "background_generation_threshold",
+  "void_section",
+  "require_void_reason",
+  "allow_void_leaf_reuse",
+  "status_section",
+  "auto_set_cleared_from_clearance_date",
+  "reserve_leaf_on_draft",
+  "pdc_section",
+  "pdc_alert_days_before",
+  "warn_on_postdated_cheque"
+ ],
+ "fields": [
+  {
+   "fieldname": "numbering_section",
+   "fieldtype": "Section Break",
+   "label": "Numbering"
+  },
+  {
+   "default": "6",
+   "description": "How many digits a cheque number is padded to, e.g. 6 gives 000101. Overridable per cheque book because banks differ.",
+   "fieldname": "default_padding_length",
+   "fieldtype": "Int",
+   "label": "Default Padding Length",
+   "non_negative": 1
+  },
+  {
+   "default": "500",
+   "description": "Guard against a typo creating a book with thousands of leaves.",
+   "fieldname": "max_leaves_per_book",
+   "fieldtype": "Int",
+   "label": "Maximum Leaves Per Book",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_numbering",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "200",
+   "description": "Books larger than this generate their leaves in a background job instead of inline.",
+   "fieldname": "background_generation_threshold",
+   "fieldtype": "Int",
+   "label": "Background Generation Threshold",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "void_section",
+   "fieldtype": "Section Break",
+   "label": "Voiding"
+  },
+  {
+   "default": "1",
+   "description": "Require a reason code when voiding a cheque",
+   "fieldname": "require_void_reason",
+   "fieldtype": "Check",
+   "label": "Require Void Reason"
+  },
+  {
+   "default": "0",
+   "description": "Allow a voided cheque number to return to the unused pool. Off by default: a voided number should stay permanently traceable in the register. Turn it on only if you physically re-run misprinted leaves through the printer.",
+   "fieldname": "allow_void_leaf_reuse",
+   "fieldtype": "Check",
+   "label": "Allow Void Leaf Reuse"
+  },
+  {
+   "fieldname": "status_section",
+   "fieldtype": "Section Break",
+   "label": "Status Tracking"
+  },
+  {
+   "default": "1",
+   "description": "Mark a cheque Cleared when its voucher gets a clearance date, via Bank Clearance or the daily reconciler.",
+   "fieldname": "auto_set_cleared_from_clearance_date",
+   "fieldtype": "Check",
+   "label": "Set Cleared From Clearance Date"
+  },
+  {
+   "default": "1",
+   "description": "Reserve a leaf as soon as a draft voucher selects it, so two users cannot both draft against the same cheque.",
+   "fieldname": "reserve_leaf_on_draft",
+   "fieldtype": "Check",
+   "label": "Reserve Leaf On Draft"
+  },
+  {
+   "fieldname": "pdc_section",
+   "fieldtype": "Section Break",
+   "label": "Post Dated Cheques"
+  },
+  {
+   "default": "3",
+   "description": "How many days ahead of its cheque date a received cheque is flagged as due.",
+   "fieldname": "pdc_alert_days_before",
+   "fieldtype": "Int",
+   "label": "PDC Alert Days Before",
+   "non_negative": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "warn_on_postdated_cheque",
+   "fieldtype": "Check",
+   "label": "Warn On Post Dated Cheque"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-07-20 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Cheque Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Accounts User"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,319 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-07-20 12:00:00.000000",
+ "description": "A physical cheque book: a bank account plus a contiguous range of pre-printed numbers",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "company",
+  "bank_account",
+  "bank",
+  "account",
+  "book_reference",
+  "column_break_main",
+  "status",
+  "issue_date",
+  "numbering_section",
+  "prefix",
+  "starting_number",
+  "number_of_leaves",
+  "column_break_numbering",
+  "suffix",
+  "padding_length",
+  "ending_number",
+  "preview_section",
+  "first_cheque_no",
+  "column_break_preview",
+  "last_cheque_no",
+  "generation_section",
+  "generation_status",
+  "leaves_generated",
+  "stats_section",
+  "unused_count",
+  "issued_count",
+  "column_break_stats",
+  "cleared_count",
+  "void_count",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "CHQ-BK-.YYYY.-.####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "CHQ-BK-.YYYY.-.####",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "description": "Must be a company bank account.",
+   "fieldname": "bank_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Bank Account",
+   "options": "Bank Account",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "bank_account.bank",
+   "fieldname": "bank",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Bank",
+   "options": "Bank",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "bank_account.account",
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "label": "Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "description": "The book or serial identifier printed by the bank, if any.",
+   "fieldname": "book_reference",
+   "fieldtype": "Data",
+   "label": "Book Reference"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Draft\nActive\nExhausted\nClosed\nCancelled",
+   "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "issue_date",
+   "fieldtype": "Date",
+   "label": "Issue Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "numbering_section",
+   "fieldtype": "Section Break",
+   "label": "Numbering"
+  },
+  {
+   "description": "Optional leading text, e.g. A or CHQ-.",
+   "fieldname": "prefix",
+   "fieldtype": "Data",
+   "label": "Prefix",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "starting_number",
+   "fieldtype": "Int",
+   "label": "Starting Number",
+   "non_negative": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "default": "25",
+   "fieldname": "number_of_leaves",
+   "fieldtype": "Int",
+   "label": "Number of Leaves",
+   "non_negative": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_numbering",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Optional trailing text. Rare.",
+   "fieldname": "suffix",
+   "fieldtype": "Data",
+   "label": "Suffix",
+   "set_only_once": 1
+  },
+  {
+   "description": "Digits to zero-pad to. Defaults from Cheque Settings.",
+   "fieldname": "padding_length",
+   "fieldtype": "Int",
+   "label": "Padding Length",
+   "non_negative": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "ending_number",
+   "fieldtype": "Int",
+   "label": "Ending Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "preview_section",
+   "fieldtype": "Section Break",
+   "label": "Preview"
+  },
+  {
+   "fieldname": "first_cheque_no",
+   "fieldtype": "Data",
+   "label": "First Cheque No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_preview",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "last_cheque_no",
+   "fieldtype": "Data",
+   "label": "Last Cheque No",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.docstatus==1",
+   "fieldname": "generation_section",
+   "fieldtype": "Section Break",
+   "label": "Leaf Generation"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "generation_status",
+   "fieldtype": "Select",
+   "label": "Generation Status",
+   "no_copy": 1,
+   "options": "Pending\nQueued\nIn Progress\nCompleted\nFailed",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "leaves_generated",
+   "fieldtype": "Int",
+   "label": "Leaves Generated",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.docstatus==1",
+   "fieldname": "stats_section",
+   "fieldtype": "Section Break",
+   "label": "Utilisation"
+  },
+  {
+   "default": "0",
+   "fieldname": "unused_count",
+   "fieldtype": "Int",
+   "label": "Unused",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "issued_count",
+   "fieldtype": "Int",
+   "label": "Issued",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_stats",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "cleared_count",
+   "fieldtype": "Int",
+   "label": "Cleared",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "void_count",
+   "fieldtype": "Int",
+   "label": "Void",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Cheque Book",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [
+  {
+   "link_doctype": "Cheque Leaf",
+   "link_fieldname": "cheque_book"
+  }
+ ],
+ "modified": "2026-07-20 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Cheque Book",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

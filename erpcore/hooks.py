@@ -26,7 +26,7 @@ required_apps = ["erpnext"]
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erpcore/css/erpcore.css"
-# app_include_js = "/assets/erpcore/js/erpcore.js"
+app_include_js = "/assets/erpcore/js/cheque_common.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erpcore/css/erpcore.css"
@@ -43,7 +43,10 @@ required_apps = ["erpnext"]
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+	"Payment Entry": "public/js/payment_entry.js",
+	"Journal Entry": "public/js/journal_entry.js",
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -86,7 +89,8 @@ required_apps = ["erpnext"]
 # ------------
 
 # before_install = "erpcore.install.before_install"
-# after_install = "erpcore.install.after_install"
+after_install = "erpcore.install.after_install"
+after_migrate = "erpcore.setup.after_migrate"
 
 # Uninstallation
 # ------------
@@ -138,34 +142,37 @@ required_apps = ["erpnext"]
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Payment Entry": {
+		"validate": "erpcore.erp_core.cheque_utils.voucher_validate",
+		"on_submit": "erpcore.erp_core.cheque_utils.voucher_on_submit",
+		"on_cancel": "erpcore.erp_core.cheque_utils.voucher_on_cancel",
+		"on_trash": "erpcore.erp_core.cheque_utils.release_reservation",
+		"on_change": "erpcore.erp_core.cheque_utils.sync_leaf_from_voucher",
+	},
+	"Journal Entry": {
+		"validate": "erpcore.erp_core.cheque_utils.voucher_validate",
+		"on_submit": "erpcore.erp_core.cheque_utils.voucher_on_submit",
+		"on_cancel": "erpcore.erp_core.cheque_utils.voucher_on_cancel",
+		"on_trash": "erpcore.erp_core.cheque_utils.release_reservation",
+		"on_change": "erpcore.erp_core.cheque_utils.sync_leaf_from_voucher",
+	},
+}
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"erpcore.tasks.all"
-# 	],
-# 	"daily": [
-# 		"erpcore.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"erpcore.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"erpcore.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"erpcore.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"daily": [
+		"erpcore.erp_core.tasks.reconcile_cheque_leaf_status",
+		"erpcore.erp_core.tasks.notify_pdc_due",
+		"erpcore.erp_core.tasks.update_gate_pass_overdue_status",
+		"erpcore.erp_core.tasks.expire_stale_visitor_passes",
+	],
+	"daily_long": [
+		"erpcore.erp_core.tasks.notify_overdue_gate_pass_returns",
+	],
+}
 
 # Testing
 # -------

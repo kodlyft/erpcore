@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:reason_name",
+ "creation": "2026-07-20 12:00:00.000000",
+ "description": "A master rather than a Select because reasons are reported on and differ per client.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "reason_name",
+  "applies_to",
+  "disabled",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "reason_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Reason",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "Both",
+   "fieldname": "applies_to",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Applies To",
+   "options": "Both\nOutward\nInward",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "links": [],
+ "modified": "2026-07-20 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Cheque Void Reason",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User"
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
