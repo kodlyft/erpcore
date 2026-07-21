@@ -105,3 +105,113 @@ jobs:
           bench --site test_site run-tests --app erpcore
         env:
           TYPE: server
+
+  ui-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    name: UI
+
+    services:
+      redis-cache:
+        image: redis:alpine
+        ports:
+          - 13000:6379
+      redis-queue:
+        image: redis:alpine
+        ports:
+          - 11000:6379
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: --health-cmd="mariadb-admin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          check-latest: true
+
+      - name: Cache pip
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/*requirements.txt', '**/pyproject.toml', '**/setup.py', '**/setup.cfg') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+
+      - name: Cache Cypress
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/Cypress
+          key: ${{ runner.os }}-cypress
+
+      - name: Install MariaDB Client
+        run: |
+          sudo apt update
+          sudo apt-get install mariadb-client
+
+      - name: Setup
+        run: |
+          pip install frappe-bench
+          bench init --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
+
+      - name: Install
+        working-directory: /home/runner/frappe-bench
+        run: |
+          bench get-app --branch version-16 erpnext
+          bench get-app erpcore $GITHUB_WORKSPACE
+          bench setup requirements --dev
+          bench new-site --db-root-password root --admin-password admin test_site_ui
+          bench --site test_site_ui install-app erpnext
+          bench --site test_site_ui install-app erpcore
+          bench --site test_site_ui set-config allow_tests true
+          bench build
+        env:
+          CI: 'Yes'
+
+      - name: Seed test masters
+        working-directory: /home/runner/frappe-bench
+        run: bench --site test_site_ui execute erpcore.tests.utils.seed_masters
+
+      - name: Start server
+        working-directory: /home/runner/frappe-bench
+        run: |
+          echo "127.0.0.1 test_site_ui" | sudo tee -a /etc/hosts
+          DEV_SERVER=1 bench serve --port 8000 &
+          for _ in $(seq 1 60); do
+            curl -sf http://test_site_ui:8000/api/method/ping > /dev/null && break
+            sleep 2
+          done
+          curl -sf http://test_site_ui:8000/api/method/ping
+        env:
+          CI: 'Yes' 
+
+      - name: Run UI Tests
+        working-directory: /home/runner/frappe-bench
+        run: bench --site test_site_ui run-ui-tests erpcore --headless
+        env:
+          CI: 'Yes'
+
+      - name: Upload Cypress artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          path: |
+            /home/runner/frappe-bench/apps/erpcore/cypress/screenshots
+            /home/runner/frappe-bench/cypressVideos
+          if-no-files-found: ignore

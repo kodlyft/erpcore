@@ -72,6 +72,9 @@ def _reconcile_against(voucher_doctype):
 
 def notify_pdc_due():
 	"""Warn the owners of post-dated cheques that are about to come due."""
+	if not frappe.db.exists("DocType", "Cheque Receipt"):
+		return
+
 	settings = frappe.get_cached_doc("Cheque Settings")
 	lead_days = settings.pdc_alert_days_before or 3
 	due_by = add_days(nowdate(), lead_days)
@@ -113,6 +116,9 @@ def update_gate_pass_overdue_status():
 
 def expire_stale_visitor_passes():
 	"""Close out visitor passes for visitors who never turned up."""
+	if not frappe.db.exists("DocType", "Visitor Gate Pass"):
+		return
+
 	stale = frappe.get_all(
 		"Visitor Gate Pass",
 		filters={"docstatus": 1, "status": "Approved", "visit_date": ["<", nowdate()]},

@@ -1,20 +1,29 @@
 # Copyright (c) 2026, Kodlyft and Contributors
 # See license.txt
 
-# import frappe
-from frappe.tests import IntegrationTestCase
+import frappe
 
-# On IntegrationTestCase, the doctype test records and all
-# link-field test record dependencies are recursively loaded
-# Use these module variables to add/remove to/from that list
-EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
-IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
+from erpcore.tests.utils import ERPCoreTestCase
 
 
-class IntegrationTestGatePassSettings(IntegrationTestCase):
-	"""
-	Integration tests for GatePassSettings.
-	Use this class for testing interactions between multiple components.
-	"""
+class IntegrationTestGatePassSettings(ERPCoreTestCase):
+	def test_defaults_are_materialised_on_install(self):
+		settings = frappe.get_cached_doc("Gate Pass Settings")
 
-	pass
+		self.assertEqual(settings.default_return_days, 7)
+		self.assertEqual(settings.overdue_alert_days, 1)
+		self.assertEqual(settings.visitor_badge_prefix, "V")
+		self.assertTrue(settings.require_guard_verification)
+		self.assertTrue(settings.enable_approval_workflow)
+		self.assertFalse(settings.allow_exit_without_approval)
+		self.assertFalse(settings.allow_purchase_receipt_creation)
+
+	def test_notify_roles_is_a_role_table(self):
+		settings = frappe.get_doc("Gate Pass Settings")
+		settings.append("notify_roles", {"role": "Gate Pass Manager"})
+		settings.save()
+
+		self.assertEqual(
+			[row.role for row in frappe.get_doc("Gate Pass Settings").notify_roles],
+			["Gate Pass Manager"],
+		)

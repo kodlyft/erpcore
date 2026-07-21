@@ -1,20 +1,21 @@
 # Copyright (c) 2026, Kodlyft and Contributors
 # See license.txt
 
-# import frappe
-from frappe.tests import IntegrationTestCase
+import frappe
 
-# On IntegrationTestCase, the doctype test records and all
-# link-field test record dependencies are recursively loaded
-# Use these module variables to add/remove to/from that list
-EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
-IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
+from erpcore.tests.utils import TEST_COMPANY, ERPCoreTestCase
 
 
-class IntegrationTestGate(IntegrationTestCase):
-	"""
-	Integration tests for Gate.
-	Use this class for testing interactions between multiple components.
-	"""
+class IntegrationTestGate(ERPCoreTestCase):
+	def test_gate_is_named_after_itself(self):
+		gate = frappe.get_doc(
+			{"doctype": "Gate", "gate_name": "_Test Dock 7", "company": TEST_COMPANY}
+		).insert()
 
-	pass
+		self.assertEqual(gate.name, "_Test Dock 7")
+		self.assertEqual(gate.gate_type, "Main")
+		self.assertFalse(gate.disabled)
+
+	def test_company_is_mandatory(self):
+		gate = frappe.get_doc({"doctype": "Gate", "gate_name": "_Test Dock 8"})
+		self.assertRaises(frappe.MandatoryError, gate.insert)
