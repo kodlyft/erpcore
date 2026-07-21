@@ -130,13 +130,10 @@ after_migrate = "erpcore.setup.after_migrate"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+	"Gate Pass": "erpcore.erp_core.gate_pass_base.gate_pass_query_conditions",
+	"Visitor Gate Pass": "erpcore.erp_core.gate_pass_base.visitor_gate_pass_query_conditions",
+}
 
 # Document Events
 # ---------------

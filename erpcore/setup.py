@@ -12,6 +12,35 @@ def after_migrate():
 	setup_roles()
 	seed_void_reasons()
 	create_indexes()
+	ensure_settings_defaults()
+	setup_workflows()
+
+
+SINGLE_DOCTYPES = ("Cheque Settings", "Gate Pass Settings")
+
+
+def ensure_settings_defaults():
+	for doctype in SINGLE_DOCTYPES:
+		if not frappe.db.exists("DocType", doctype):
+			continue
+
+		if frappe.db.exists("Singles", {"doctype": doctype}):
+			continue
+
+		doc = frappe.get_doc(doctype)
+		for df in frappe.get_meta(doctype).fields:
+			if df.default not in (None, "") and doc.get(df.fieldname) in (None, ""):
+				doc.set(df.fieldname, df.default)
+
+		doc.flags.ignore_permissions = True
+		doc.save()
+
+
+def setup_workflows():
+	"""Install the Gate Pass approval workflow if the setting asks for it."""
+	from erpcore.erp_core.workflows import setup_gate_pass_workflow
+
+	setup_gate_pass_workflow()
 
 
 def setup_custom_fields():

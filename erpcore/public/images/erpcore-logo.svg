@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="ERP Core">
+  <title>ERP Core</title>
+  <rect width="128" height="128" rx="28" fill="#4F46E5"/>
+  <!-- Solid isometric cube: the "core" the app packages. -->
+  <path d="M64 26 L102 48 L64 70 L26 48 Z" fill="#FFFFFF"/>
+  <path d="M26 48 L64 70 L64 114 L26 92 Z" fill="#FFFFFF" fill-opacity="0.62"/>
+  <path d="M102 48 L102 92 L64 114 L64 70 Z" fill="#FFFFFF" fill-opacity="0.86"/>
+</svg>

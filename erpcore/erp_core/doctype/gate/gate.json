@@ -2,53 +2,68 @@
  "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
- "autoname": "field:reason_name",
+ "autoname": "field:gate_name",
  "creation": "2026-07-20 12:00:00",
- "description": "A master rather than a Select because reasons are reported on and differ per client.",
+ "description": "A physical entry or exit point. Makes the gate pass register and guard-shift reports meaningful.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "reason_name",
-  "applies_to",
-  "disabled",
-  "description"
+  "gate_name",
+  "company",
+  "gate_type",
+  "column_break_main",
+  "location",
+  "disabled"
  ],
  "fields": [
   {
-   "fieldname": "reason_name",
+   "fieldname": "gate_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Reason",
+   "label": "Gate Name",
    "reqd": 1,
    "unique": 1
   },
   {
-   "default": "Both",
-   "fieldname": "applies_to",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "Main",
+   "fieldname": "gate_type",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Applies To",
-   "options": "Both\nOutward\nInward",
-   "reqd": 1
+   "in_standard_filter": 1,
+   "label": "Gate Type",
+   "options": "Main\nMaterial\nStaff\nVisitor"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location"
   },
   {
    "default": "0",
    "fieldname": "disabled",
    "fieldtype": "Check",
    "label": "Disabled"
-  },
-  {
-   "fieldname": "description",
-   "fieldtype": "Small Text",
-   "label": "Description"
   }
  ],
  "links": [],
- "modified": "2026-07-21 11:18:28.796251",
+ "modified": "2026-07-21 11:27:05.555609",
  "modified_by": "Administrator",
  "module": "ERP Core",
- "name": "Cheque Void Reason",
+ "name": "Gate",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
@@ -72,14 +87,18 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Accounts Manager",
+   "role": "Gate Pass Manager",
    "share": 1,
    "write": 1
   },
   {
    "read": 1,
    "report": 1,
-   "role": "Accounts User"
+   "role": "Gate Pass User"
+  },
+  {
+   "read": 1,
+   "role": "Gate Keeper"
   }
  ],
  "quick_entry": 1,

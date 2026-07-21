@@ -1,0 +1,168 @@
+{
+ "actions": [],
+ "creation": "2026-07-20 12:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "returns_section",
+  "default_return_days",
+  "overdue_alert_days",
+  "column_break_returns",
+  "notify_roles",
+  "security_section",
+  "require_guard_verification",
+  "allow_exit_without_approval",
+  "column_break_security",
+  "enable_approval_workflow",
+  "visitor_section",
+  "require_visitor_id_proof",
+  "enable_blacklist_check",
+  "column_break_visitor",
+  "visitor_badge_prefix",
+  "stock_section",
+  "allow_purchase_receipt_creation"
+ ],
+ "fields": [
+  {
+   "fieldname": "returns_section",
+   "fieldtype": "Section Break",
+   "label": "Returnable Material"
+  },
+  {
+   "default": "7",
+   "description": "Default number of days a returnable gate pass allows before the material is due back.",
+   "fieldname": "default_return_days",
+   "fieldtype": "Int",
+   "label": "Default Return Days",
+   "non_negative": 1
+  },
+  {
+   "default": "1",
+   "description": "How many days after the due date to start alerting.",
+   "fieldname": "overdue_alert_days",
+   "fieldtype": "Int",
+   "label": "Overdue Alert Days",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_returns",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Roles that receive the daily overdue-return digest.",
+   "fieldname": "notify_roles",
+   "fieldtype": "Table MultiSelect",
+   "label": "Notify Roles",
+   "options": "Gate Pass Notify Role"
+  },
+  {
+   "fieldname": "security_section",
+   "fieldtype": "Section Break",
+   "label": "Security"
+  },
+  {
+   "default": "1",
+   "description": "Require the guard to tick Verified before material may leave.",
+   "fieldname": "require_guard_verification",
+   "fieldtype": "Check",
+   "label": "Require Guard Verification"
+  },
+  {
+   "default": "0",
+   "description": "Allow a guard to release a gate pass that has not been approved. Off by default.",
+   "fieldname": "allow_exit_without_approval",
+   "fieldtype": "Check",
+   "label": "Allow Exit Without Approval"
+  },
+  {
+   "fieldname": "column_break_security",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "description": "Route gate passes through Draft to Pending Approval to Approved before they can be issued. Turning this off leaves the operational statuses untouched; only the approval step is removed.",
+   "fieldname": "enable_approval_workflow",
+   "fieldtype": "Check",
+   "label": "Enable Approval Workflow"
+  },
+  {
+   "fieldname": "visitor_section",
+   "fieldtype": "Section Break",
+   "label": "Visitors"
+  },
+  {
+   "default": "1",
+   "fieldname": "require_visitor_id_proof",
+   "fieldtype": "Check",
+   "label": "Require Visitor ID Proof"
+  },
+  {
+   "default": "1",
+   "description": "Check visitors against the Visitor Blacklist on save.",
+   "fieldname": "enable_blacklist_check",
+   "fieldtype": "Check",
+   "label": "Enable Blacklist Check"
+  },
+  {
+   "fieldname": "column_break_visitor",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "V",
+   "fieldname": "visitor_badge_prefix",
+   "fieldtype": "Data",
+   "label": "Visitor Badge Prefix"
+  },
+  {
+   "fieldname": "stock_section",
+   "fieldtype": "Section Break",
+   "label": "Stock"
+  },
+  {
+   "default": "0",
+   "description": "Allow creating a Purchase Receipt from a submitted inward gate pass whose items came from a Purchase Order. The gate pass itself never moves stock.",
+   "fieldname": "allow_purchase_receipt_creation",
+   "fieldtype": "Check",
+   "label": "Allow Purchase Receipt Creation"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-07-21 11:30:13.057928",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Gate Pass Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Gate Pass Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Gate Pass User"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
