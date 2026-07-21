@@ -198,9 +198,6 @@ than being free text.
 ERPNext is a hard dependency. It is declared in `required_apps`, so installing
 `erpcore` on a site without ERPNext will fail.
 
-> **Do not install alongside [`slw`](https://github.com/kodlyft/slw).** Both apps define
-> a `Gate Pass` doctype and will collide. ERP Core's implementation supersedes it.
-
 ## Installation
 
 Install with the [bench](https://github.com/frappe/bench) CLI:
