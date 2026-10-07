@@ -59,6 +59,7 @@ def seed_masters():
 	make_gate()
 	make_users()
 	make_outgoing_email_account()
+	frappe.db.commit()  # nosemgrep
 
 
 def backfill_accounting_dimensions():

@@ -179,6 +179,7 @@ jobs:
           bench --site test_site_ui install-app erpnext
           bench --site test_site_ui install-app erpcore
           bench --site test_site_ui set-config allow_tests true
+          bench --site test_site_ui set-config admin_password admin
           bench build
         env:
           CI: 'Yes'
