@@ -14,9 +14,16 @@ def after_migrate():
 	create_indexes()
 	ensure_settings_defaults()
 	setup_workflows()
+	setup_monthly_close()
 
 
-SINGLE_DOCTYPES = ("Cheque Settings", "Gate Pass Settings")
+SINGLE_DOCTYPES = ("Cheque Settings", "Gate Pass Settings", "Monthly Close Settings")
+
+
+def setup_monthly_close():
+	from erpcore.erp_core.monthly_close.install import after_migrate as monthly_close_after_migrate
+
+	monthly_close_after_migrate()
 
 
 def ensure_settings_defaults():
@@ -67,6 +74,12 @@ def _target_exists(definition):
 
 
 def get_custom_fields():
+	from erpcore.erp_core.monthly_close.install import custom_fields as monthly_close_fields
+
+	return {**_cheque_custom_fields(), **monthly_close_fields()}
+
+
+def _cheque_custom_fields():
 	return {
 		"Payment Entry": [
 			{

@@ -173,3 +173,62 @@ def set_setting(doctype, fieldname, value):
 
 	frappe.db.set_single_value(doctype, fieldname, value)
 	frappe.clear_cache()
+
+
+CYPRESS_CLOSE_OFFSET = 24  # months back; no server test uses this month
+
+
+@whitelist_for_tests()
+def reset_monthly_close():
+	"""A Draft close for a dedicated past month, with everything from earlier runs removed.
+
+	The UI spec commits real data, so earlier runs' close, lock and evidence for this
+	month are deleted directly here. This is test-only cleanup; the application itself
+	never deletes closes, events or snapshots.
+	"""
+	from frappe.utils import add_months, get_first_day
+
+	from erpcore.erp_core.monthly_close import lifecycle
+	from erpcore.erp_core.monthly_close.tests.utils import setup_monthly_close_fixtures
+
+	setup_monthly_close_fixtures()
+	start = get_first_day(add_months(nowdate(), -CYPRESS_CLOSE_OFFSET))
+
+	for name in frappe.get_all(
+		"Monthly Close", filters={"company": COMPANY, "period_start": start}, pluck="name"
+	):
+		for doctype in (
+			"Monthly Close Task",
+			"Monthly Close Check Run",
+			"Monthly Close Exception",
+			"Monthly Close Bank Certification",
+			"Monthly Close Reopen Request",
+			"Monthly Close Event",
+			"Monthly Close Snapshot",
+		):
+			frappe.db.delete(doctype, {"monthly_close": name})
+		period = frappe.db.get_value("Monthly Close", name, "accounting_period")
+		frappe.db.delete("Monthly Close", {"name": name})
+		if period:
+			frappe.db.delete("Closed Document", {"parent": period})
+			frappe.db.delete("Accounting Period", {"name": period})
+
+	# Administrator drives every step in the UI spec, so this company allows self-approval.
+	frappe.db.set_value("Monthly Close Policy", COMPANY, {"cutover_period": start, "allow_self_approval": 1})
+	frappe.clear_document_cache("Monthly Close Policy", COMPANY)
+	name = lifecycle.create_close(COMPANY, start)
+	frappe.db.commit()  # nosemgrep
+	return {"name": name, "month": start.strftime("%Y-%m")}
+
+
+@whitelist_for_tests()
+def prepare_monthly_close_for_review(name):
+	"""Complete the checklist and run the checks synchronously, as a preparer would."""
+	from erpcore.erp_core.monthly_close import check_runner, lifecycle
+	from erpcore.erp_core.monthly_close.tests.utils import complete_tasks
+
+	complete_tasks(name)
+	run = lifecycle.request_check_run(name)
+	check_runner.execute_check_run(run)
+	frappe.db.commit()  # nosemgrep
+	return {"check_run": run}

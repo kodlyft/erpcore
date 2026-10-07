@@ -1,0 +1,596 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-07 10:00:00",
+ "default_print_format": "Monthly Close Packet",
+ "description": "One company's month-end close: checklist, checks, exceptions, review, the enforced lock and the evidence packet. It never posts entries.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "period_start",
+  "period_end",
+  "month",
+  "column_break_period",
+  "state",
+  "revision",
+  "fiscal_year",
+  "revalidation_required",
+  "dashboard_section",
+  "dashboard_html",
+  "team_section",
+  "preparer",
+  "reviewer",
+  "due_date",
+  "column_break_team",
+  "template",
+  "template_version",
+  "policy",
+  "policy_version",
+  "self_approval_used",
+  "notes_section",
+  "notes",
+  "review_section",
+  "latest_check_run",
+  "latest_fingerprint",
+  "submitted_by",
+  "submitted_at",
+  "submitted_check_run",
+  "rejection_reason",
+  "column_break_review",
+  "approved_by",
+  "approved_at",
+  "approved_revision",
+  "approved_check_run",
+  "approved_fingerprint",
+  "lock_section",
+  "accounting_period",
+  "lock_owned",
+  "external_accounting_period",
+  "column_break_lock",
+  "closer",
+  "closing_check_run",
+  "closing_fingerprint",
+  "closed_by",
+  "closed_at",
+  "reopen_section",
+  "reopen_count",
+  "reopened_by",
+  "reopened_at",
+  "column_break_reopen",
+  "pending_action",
+  "pending_requested_by",
+  "pending_token",
+  "last_error",
+  "template_section",
+  "template_snapshot"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "remember_last_selected_value": 1,
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "Any date in the month; it is moved to the 1st.",
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "label": "Month Start",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Month End",
+   "read_only": 1
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Month",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_period",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "State",
+   "no_copy": 1,
+   "options": "Draft\nIn Progress\nReady for Review\nApproved\nClosing\nClosed\nReopened",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "revision",
+   "fieldtype": "Int",
+   "label": "Revision",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Link",
+   "label": "Fiscal Year",
+   "options": "Fiscal Year",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "An earlier month was reopened after this one closed. The lock is still in force; confirm the balances still hold.",
+   "fieldname": "revalidation_required",
+   "fieldtype": "Check",
+   "label": "Revalidation Required",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "dashboard_section",
+   "fieldtype": "Section Break",
+   "label": "Close Status"
+  },
+  {
+   "fieldname": "dashboard_html",
+   "fieldtype": "HTML",
+   "label": "Dashboard"
+  },
+  {
+   "fieldname": "team_section",
+   "fieldtype": "Section Break",
+   "label": "Team and Checklist"
+  },
+  {
+   "fieldname": "preparer",
+   "fieldtype": "Link",
+   "label": "Preparer",
+   "options": "User"
+  },
+  {
+   "fieldname": "reviewer",
+   "fieldtype": "Link",
+   "label": "Reviewer",
+   "options": "User"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Target Close Date"
+  },
+  {
+   "fieldname": "column_break_team",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "template",
+   "fieldtype": "Link",
+   "label": "Checklist Template",
+   "options": "Monthly Close Template"
+  },
+  {
+   "fieldname": "template_version",
+   "fieldtype": "Int",
+   "label": "Template Version Used",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "policy",
+   "fieldtype": "Link",
+   "label": "Policy",
+   "options": "Monthly Close Policy",
+   "read_only": 1
+  },
+  {
+   "fieldname": "policy_version",
+   "fieldtype": "Int",
+   "label": "Policy Version",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "self_approval_used",
+   "fieldtype": "Check",
+   "label": "Self-Approval Policy Used",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "review_section",
+   "fieldtype": "Section Break",
+   "label": "Review and Approval"
+  },
+  {
+   "fieldname": "latest_check_run",
+   "fieldtype": "Link",
+   "label": "Latest Check Run",
+   "no_copy": 1,
+   "options": "Monthly Close Check Run",
+   "read_only": 1
+  },
+  {
+   "fieldname": "latest_fingerprint",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Latest Fingerprint",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Link",
+   "label": "Submitted By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_check_run",
+   "fieldtype": "Link",
+   "label": "Submitted Check Run",
+   "no_copy": 1,
+   "options": "Monthly Close Check Run",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejection_reason",
+   "fieldtype": "Small Text",
+   "label": "Last Send-Back Reason",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_review",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "approved_revision",
+   "fieldtype": "Int",
+   "label": "Approved Revision",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_check_run",
+   "fieldtype": "Link",
+   "label": "Approved Check Run",
+   "no_copy": 1,
+   "options": "Monthly Close Check Run",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_fingerprint",
+   "fieldtype": "Data",
+   "label": "Approved Fingerprint",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "lock_section",
+   "fieldtype": "Section Break",
+   "label": "Lock"
+  },
+  {
+   "description": "Native Accounting Period enforcing the lock. Locks are company-wide; Finance Books and dimensions only filter reports.",
+   "fieldname": "accounting_period",
+   "fieldtype": "Link",
+   "label": "Accounting Period",
+   "no_copy": 1,
+   "options": "Accounting Period",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "lock_owned",
+   "fieldtype": "Check",
+   "label": "Lock Owned by This Close",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "description": "An existing exact-range period a System Manager associated with this close. It is never disabled by reopening.",
+   "fieldname": "external_accounting_period",
+   "fieldtype": "Link",
+   "label": "Associated External Period",
+   "no_copy": 1,
+   "options": "Accounting Period",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_lock",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "closer",
+   "fieldtype": "Link",
+   "label": "Hard Closed By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closing_check_run",
+   "fieldtype": "Link",
+   "label": "Final Check Run",
+   "no_copy": 1,
+   "options": "Monthly Close Check Run",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closing_fingerprint",
+   "fieldtype": "Data",
+   "label": "Closing Fingerprint",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_by",
+   "fieldtype": "Link",
+   "label": "Closed By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_at",
+   "fieldtype": "Datetime",
+   "label": "Closed At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "reopen_section",
+   "fieldtype": "Section Break",
+   "label": "Reopening and Background Work"
+  },
+  {
+   "default": "0",
+   "fieldname": "reopen_count",
+   "fieldtype": "Int",
+   "label": "Times Reopened",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "reopened_by",
+   "fieldtype": "Link",
+   "label": "Last Reopened By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reopened_at",
+   "fieldtype": "Datetime",
+   "label": "Last Reopened At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_reopen",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pending_action",
+   "fieldtype": "Data",
+   "label": "Background Action",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "pending_requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pending_token",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Job Token",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_error",
+   "fieldtype": "Small Text",
+   "label": "Last Error",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "template_section",
+   "fieldtype": "Section Break",
+   "label": "Frozen Checklist"
+  },
+  {
+   "fieldname": "template_snapshot",
+   "fieldtype": "Code",
+   "label": "Template Snapshot",
+   "no_copy": 1,
+   "options": "JSON",
+   "read_only": 1
+  }
+ ],
+ "links": [
+  {
+   "group": "Work",
+   "link_doctype": "Monthly Close Task",
+   "link_fieldname": "monthly_close"
+  },
+  {
+   "group": "Work",
+   "link_doctype": "Monthly Close Bank Certification",
+   "link_fieldname": "monthly_close"
+  },
+  {
+   "group": "Checks",
+   "link_doctype": "Monthly Close Check Run",
+   "link_fieldname": "monthly_close"
+  },
+  {
+   "group": "Checks",
+   "link_doctype": "Monthly Close Exception",
+   "link_fieldname": "monthly_close"
+  },
+  {
+   "group": "History",
+   "link_doctype": "Monthly Close Snapshot",
+   "link_fieldname": "monthly_close"
+  },
+  {
+   "group": "History",
+   "link_doctype": "Monthly Close Reopen Request",
+   "link_fieldname": "monthly_close"
+  },
+  {
+   "group": "History",
+   "link_doctype": "Monthly Close Event",
+   "link_fieldname": "monthly_close"
+  }
+ ],
+ "modified": "2026-10-07 10:00:00",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Monthly Close",
+ "naming_rule": "By script",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Preparer",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Reviewer",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "show_title_field_in_link": 0,
+ "sort_field": "period_start",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Gray",
+   "title": "Draft"
+  },
+  {
+   "color": "Orange",
+   "title": "In Progress"
+  },
+  {
+   "color": "Blue",
+   "title": "Ready for Review"
+  },
+  {
+   "color": "Cyan",
+   "title": "Approved"
+  },
+  {
+   "color": "Purple",
+   "title": "Closing"
+  },
+  {
+   "color": "Green",
+   "title": "Closed"
+  },
+  {
+   "color": "Red",
+   "title": "Reopened"
+  }
+ ],
+ "track_changes": 1
+}

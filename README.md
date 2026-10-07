@@ -21,12 +21,13 @@
 **ERP Core** packages shared, cross-cutting requirements used across Kodlyft's ERPNext
 deployments, so they live in one versioned place instead of being duplicated per site.
 
-It currently ships two modules:
+It currently ships three modules:
 
 | Module | What it does |
 | ------ | ------------ |
 | **Cheque Management** | Cheque books, per-leaf status tracking, void reasons, and post-dated cheques received from customers |
 | **Gate Pass** | Inward/outward material passes, returnable-material tracking, and security check-in/check-out |
+| **Monthly Closing** | Per-company month-end close: checklist, automated checks, exceptions, review and approval, an enforced lock through native Accounting Period, sealed evidence packet, controlled reopening |
 
 > **Status: active development.** Cheque books and gate passes are functional. Inward
 > cheque receipts, cheque printing, visitor passes, print formats and reports are still
@@ -187,6 +188,28 @@ than being free text.
 
 ---
 
+## Monthly Closing
+
+A **Monthly Close** coordinates one company's month end: a frozen checklist, a versioned
+set of automated checks, approved exceptions, preparer/reviewer/manager approval, and a
+hard close that locks the month through an ERPNext **Accounting Period** owned by the
+close. Closing seals a packet of report snapshots (Trial Balance, P&L month and
+year-to-date, Balance Sheet, AR/AP ageing, stock vs accounts) with SHA-256 hashes.
+Reopening needs a reason and a second Close Manager, and starts a new revision. The
+earlier revision's evidence is kept and marked Superseded.
+
+It never posts anything. It does not create a Period Closing Voucher, zero income and
+expense accounts, revalue currencies, run depreciation or touch the company freeze date.
+
+* Roles: Close Preparer, Close Reviewer, Close Manager, Close Auditor.
+* Set up a **Monthly Close Policy** per company (first managed month, checklist template,
+  check severities and tolerances, suspense accounts). Installing or upgrading never
+  creates a policy, so no historical month is managed or locked automatically.
+* Workspace: **Monthly Closing**. Reports: Status, Outstanding Tasks, Exceptions, Lock
+  Integrity, Audit Trail, Posting Coverage.
+
+---
+
 ## Requirements
 
 | Dependency       | Version         |
@@ -218,6 +241,8 @@ seed was added still picks it up.
 | ------- | ----- | ----- |
 | Padding, book size limits, void reuse, PDC alerts | **Cheque Settings** | `Allow Void Leaf Reuse` is off by default and should usually stay off |
 | Return days, guard verification, approval workflow, visitor rules | **Gate Pass Settings** | Turning off `Enable Approval Workflow` deactivates the workflow on the next migrate |
+| Module switch, default template, sample size | **Monthly Close Settings** | Disabling stops new closes and transitions; existing locks stay in force |
+| Cutover month, template, check severities, self-approval | **Monthly Close Policy** (one per company) | Self-approval is off by default; each use is recorded |
 
 ## Development
 

@@ -95,7 +95,7 @@ after_migrate = "erpcore.setup.after_migrate"
 # Uninstallation
 # ------------
 
-# before_uninstall = "erpcore.uninstall.before_uninstall"
+before_uninstall = "erpcore.uninstall.before_uninstall"
 # after_uninstall = "erpcore.uninstall.after_uninstall"
 
 # Integration Setup
@@ -130,9 +130,35 @@ after_migrate = "erpcore.setup.after_migrate"
 # -----------
 # Permissions evaluated in scripted ways
 
+MC_PERMISSIONS = "erpcore.erp_core.monthly_close.permissions"
+
 permission_query_conditions = {
 	"Gate Pass": "erpcore.erp_core.gate_pass_base.gate_pass_query_conditions",
 	"Visitor Gate Pass": "erpcore.erp_core.gate_pass_base.visitor_gate_pass_query_conditions",
+	"Monthly Close": f"{MC_PERMISSIONS}.monthly_close_conditions",
+	"Monthly Close Policy": f"{MC_PERMISSIONS}.policy_conditions",
+	"Monthly Close Task": f"{MC_PERMISSIONS}.task_conditions",
+	"Monthly Close Check Run": f"{MC_PERMISSIONS}.check_run_conditions",
+	"Monthly Close Exception": f"{MC_PERMISSIONS}.exception_conditions",
+	"Monthly Close Bank Certification": f"{MC_PERMISSIONS}.bank_cert_conditions",
+	"Monthly Close Reopen Request": f"{MC_PERMISSIONS}.reopen_conditions",
+	"Monthly Close Event": f"{MC_PERMISSIONS}.event_conditions",
+	"Monthly Close Snapshot": f"{MC_PERMISSIONS}.snapshot_conditions",
+}
+
+has_permission = {
+	doctype: f"{MC_PERMISSIONS}.has_permission"
+	for doctype in (
+		"Monthly Close",
+		"Monthly Close Policy",
+		"Monthly Close Task",
+		"Monthly Close Check Run",
+		"Monthly Close Exception",
+		"Monthly Close Bank Certification",
+		"Monthly Close Reopen Request",
+		"Monthly Close Event",
+		"Monthly Close Snapshot",
+	)
 }
 
 # Document Events
@@ -154,7 +180,22 @@ doc_events = {
 		"on_trash": "erpcore.erp_core.cheque_utils.release_reservation",
 		"on_change": "erpcore.erp_core.cheque_utils.sync_leaf_from_voucher",
 	},
+	# Monthly close: serialization gate on every ledger row (see monthly_close/posting_guard.py).
+	"GL Entry": {
+		"before_submit": "erpcore.erp_core.monthly_close.posting_guard.guard_ledger_entry",
+	},
+	"Stock Ledger Entry": {
+		"before_submit": "erpcore.erp_core.monthly_close.posting_guard.guard_ledger_entry",
+	},
+	# Monthly close: Accounting Periods owned by a close change only through the close.
+	"Accounting Period": {
+		"validate": "erpcore.erp_core.monthly_close.native_lock.protect_owned_period",
+		"on_trash": "erpcore.erp_core.monthly_close.native_lock.protect_owned_period_delete",
+	},
 }
+
+# Registered close checks from other apps: dotted module paths that call register_check on import.
+erpcore_monthly_close_checks = []
 
 # Scheduled Tasks
 # ---------------
@@ -165,9 +206,14 @@ scheduler_events = {
 		"erpcore.erp_core.tasks.notify_pdc_due",
 		"erpcore.erp_core.tasks.update_gate_pass_overdue_status",
 		"erpcore.erp_core.tasks.expire_stale_visitor_passes",
+		"erpcore.erp_core.monthly_close.scheduled.check_lock_integrity",
+		"erpcore.erp_core.monthly_close.scheduled.send_task_reminders",
 	],
 	"daily_long": [
 		"erpcore.erp_core.tasks.notify_overdue_gate_pass_returns",
+	],
+	"hourly": [
+		"erpcore.erp_core.monthly_close.scheduled.recover_stuck_runs",
 	],
 }
 

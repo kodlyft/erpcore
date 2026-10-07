@@ -74,3 +74,11 @@ Cypress.Commands.add("select_link", (fieldname, value, opts = {}) => {
 
 	cy.get("@link_input").should("have.value", value);
 });
+
+Cypress.Commands.add("reset_monthly_close", () => {
+	return cy.call(`${FIXTURES}.reset_monthly_close`).then((r) => r.message);
+});
+
+Cypress.Commands.add("prepare_monthly_close_for_review", (name) => {
+	return cy.call(`${FIXTURES}.prepare_monthly_close_for_review`, { name }).then((r) => r.message);
+});

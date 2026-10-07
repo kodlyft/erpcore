@@ -1,0 +1,167 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:company",
+ "creation": "2026-10-07 10:00:00",
+ "description": "How one company closes its months. Changing the policy makes earlier check runs stale.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "enabled",
+  "cutover_period",
+  "column_break_main",
+  "template",
+  "policy_version",
+  "controls_section",
+  "allow_self_approval",
+  "column_break_controls",
+  "reminder_days_before_due",
+  "checks_section",
+  "checks",
+  "suspense_section",
+  "suspense_accounts"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "description": "First month managed by Monthly Closing. Earlier months are not reconstructed, and the close sequence starts here.",
+   "fieldname": "cutover_period",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "First Managed Month",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "template",
+   "fieldtype": "Link",
+   "label": "Checklist Template",
+   "options": "Monthly Close Template",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "policy_version",
+   "fieldtype": "Int",
+   "label": "Policy Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "controls_section",
+   "fieldtype": "Section Break",
+   "label": "Controls"
+  },
+  {
+   "default": "0",
+   "description": "Off by default. When on, the same person may prepare and approve a close, exception, bank workpaper or reopen request. Each use is recorded in the audit trail and the close packet.",
+   "fieldname": "allow_self_approval",
+   "fieldtype": "Check",
+   "label": "Allow Self-Approval (small teams)"
+  },
+  {
+   "fieldname": "column_break_controls",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "2",
+   "fieldname": "reminder_days_before_due",
+   "fieldtype": "Int",
+   "label": "Remind Days Before Due",
+   "non_negative": 1
+  },
+  {
+   "description": "Registered checks that are not listed run with their default severity.",
+   "fieldname": "checks_section",
+   "fieldtype": "Section Break",
+   "label": "Automated Checks"
+  },
+  {
+   "fieldname": "checks",
+   "fieldtype": "Table",
+   "label": "Checks",
+   "options": "Monthly Close Policy Check"
+  },
+  {
+   "description": "Accounts that should be empty at month end. Pick them explicitly; names are never guessed.",
+   "fieldname": "suspense_section",
+   "fieldtype": "Section Break",
+   "label": "Suspense and Temporary Accounts"
+  },
+  {
+   "fieldname": "suspense_accounts",
+   "fieldtype": "Table",
+   "label": "Accounts",
+   "options": "Monthly Close Policy Account"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-07 10:00:00",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Monthly Close Policy",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Close Preparer"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Close Reviewer"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Close Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
