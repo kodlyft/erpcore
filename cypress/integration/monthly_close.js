@@ -76,7 +76,9 @@ describe("Monthly Close", () => {
 
 		cy.open_doc("Monthly Close", close.name);
 		cy.get(".inner-group-button[data-label='Reopen%20Requests'] button").click();
-		cy.get(".inner-group-button[data-label='Reopen%20Requests'] .dropdown-item").first().click();
+		cy.get(".inner-group-button[data-label='Reopen%20Requests'] .dropdown-item")
+			.first()
+			.click({ force: true });
 		cy.get(".modal:visible").contains("button", "Yes").click();
 		wait_for_state(close.name, "Reopened");
 
