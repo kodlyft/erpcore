@@ -36,18 +36,17 @@ describe("Gate Pass approval workflow", () => {
 
 		// pass_type is derived from direction + returnable
 		cy.get('[data-fieldname="pass_type"]').should("contain.text", "NRGP");
-		cy.get(".indicator-pill").should("contain.text", "Draft");
+		cy.window()
+			.its("cur_frm.doc.name")
+			.should("not.match", /^new-gate-pass-/)
+			.then((name) => {
+				cy.field_value("Gate Pass", name, "workflow_state").should("eq", "Draft");
 
-		cy.apply_workflow_action("Submit for Approval");
-		cy.get(".indicator-pill").should("contain.text", "Pending Approval");
+				cy.apply_workflow_action("Submit for Approval");
+				cy.field_value("Gate Pass", name, "workflow_state").should("eq", "Pending Approval");
 
-		cy.apply_workflow_action("Approve");
-		cy.get(".indicator-pill").should("contain.text", "Approved");
-
-		cy.get("body")
-			.invoke("attr", "data-route")
-			.then((route) => {
-				const name = route.split("/").pop();
+				cy.apply_workflow_action("Approve");
+				cy.field_value("Gate Pass", name, "workflow_state").should("eq", "Approved");
 				cy.field_value("Gate Pass", name, "docstatus").should("eq", 1);
 				cy.field_value("Gate Pass", name, "status").should("eq", "Approved");
 			});

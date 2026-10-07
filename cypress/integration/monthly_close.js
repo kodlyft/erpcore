@@ -45,11 +45,14 @@ describe("Monthly Close", () => {
 		cy.open_doc("Monthly Close", close.name);
 		cy.contains(".mc-dashboard", "Check Results").should("be.visible");
 		cy.findByRole("button", { name: "Submit for Review" }).click();
-		cy.contains(".indicator-pill", "Ready for Review").should("be.visible");
+		wait_for_state(close.name, "Ready for Review");
 
+		cy.open_doc("Monthly Close", close.name);
 		cy.findByRole("button", { name: "Approve" }).click();
 		cy.get(".modal:visible").contains("button", "Yes").click();
-		cy.contains(".indicator-pill", "Approved").should("be.visible");
+		wait_for_state(close.name, "Approved");
+
+		cy.open_doc("Monthly Close", close.name);
 
 		cy.findByRole("button", { name: "Hard Close" }).click();
 		cy.get(".modal:visible").should(

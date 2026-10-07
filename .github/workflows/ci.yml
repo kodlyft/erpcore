@@ -195,6 +195,7 @@ jobs:
         run: |
           echo "127.0.0.1 test_site_ui" | sudo tee -a /etc/hosts
           DEV_SERVER=1 bench serve --port 8000 &
+          bench worker &
           for _ in $(seq 1 60); do
             curl -sf http://test_site_ui:8000/api/method/ping > /dev/null && break
             sleep 2
