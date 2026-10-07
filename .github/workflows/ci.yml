@@ -186,7 +186,9 @@ jobs:
 
       - name: Seed test masters
         working-directory: /home/runner/frappe-bench
-        run: bench --site test_site_ui execute erpcore.tests.utils.seed_masters
+        run: |
+          bench --site test_site_ui execute erpcore.tests.utils.seed_masters
+          bench --site test_site_ui execute erpcore.tests.utils.mark_setup_complete
 
       - name: Start server
         working-directory: /home/runner/frappe-bench

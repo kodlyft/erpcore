@@ -62,6 +62,17 @@ def seed_masters():
 	frappe.db.commit()  # nosemgrep
 
 
+def mark_setup_complete():
+	"""Skip the setup wizard on the UI test site; the bootstrap data already provides the company.
+
+	Running the real wizard would create a second company next to the bootstrap's ``_Test Company``.
+	"""
+	frappe.db.set_value("Installed Application", {"app_name": ("is", "set")}, "is_setup_complete", 1)
+	frappe.db.set_single_value("System Settings", "setup_complete", 1)
+	frappe.db.set_default("desktop:home_page", "workspace")
+	frappe.clear_cache()
+
+
 def backfill_accounting_dimensions():
 	"""Give every Accounting Dimension the columns ERPNext expects it to have."""
 	from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
