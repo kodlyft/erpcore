@@ -51,7 +51,7 @@ class GatePassBase:
 			)
 
 
-def _company_conditions(doctype: str, user: str | None = None):
+def company_conditions(doctype: str, user: str | None = None):
 	"""Limit list views to companies the user is permitted on."""
 	user = user or frappe.session.user
 
@@ -70,8 +70,8 @@ def _company_conditions(doctype: str, user: str | None = None):
 
 
 def gate_pass_query_conditions(user: str | None = None):
-	return _company_conditions("Gate Pass", user)
+	return company_conditions("Gate Pass", user)
 
 
 def visitor_gate_pass_query_conditions(user: str | None = None):
-	return _company_conditions("Visitor Gate Pass", user)
+	return company_conditions("Visitor Gate Pass", user)

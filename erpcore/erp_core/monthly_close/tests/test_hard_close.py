@@ -72,6 +72,13 @@ class TestHardClose(MonthlyCloseTestCase):
 			self.assertEqual(s.status, "Original")
 			self.assertTrue(snapshot.verify(s.name)["ok"])
 
+		packet = snapshot.revision_packet(name, 1)["Close Packet"]
+		self.assertTrue(packet.verified)
+		html = frappe.get_doc("File", {"file_url": packet.file}).get_content()
+		self.assertIn("Monthly Close Packet", html)
+		self.assertIn(name, html)
+		self.assertNotIn("no such element", html, "every field the template uses must be in the manifest")
+
 		events = frappe.get_all("Monthly Close Event", filters={"monthly_close": name}, pluck="event_type")
 		for expected in (
 			"Created",
@@ -82,6 +89,18 @@ class TestHardClose(MonthlyCloseTestCase):
 			"Closed",
 		):
 			self.assertIn(expected, events)
+
+	def test_packet_escapes_user_entered_text(self):
+		"""Notes end up in an HTML file opened in the browser with the reader's session."""
+		name = drive_to_approved(3)
+		task = frappe.get_last_doc("Monthly Close Task", filters={"monthly_close": name})
+		frappe.db.set_value("Monthly Close Task", task.name, "notes", "<script>alert(1)</script>")
+		hard_close(name)
+
+		packet = snapshot.revision_packet(name, 1)["Close Packet"]
+		html = frappe.get_doc("File", {"file_url": packet.file}).get_content()
+		self.assertNotIn("<script>alert(1)</script>", html)
+		self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", html)
 
 	def test_closed_month_refuses_postings_but_next_month_works(self):
 		start = month(3)
@@ -208,6 +227,12 @@ class TestHardClose(MonthlyCloseTestCase):
 		frappe.db.set_value("Accounting Period", period.name, "disabled", 1)
 		close = frappe.get_doc("Monthly Close", name)
 		self.assertEqual(native_lock.lock_health(close)["status"], "Failed")
+
+		# Ownership must be exact: a cleared owner leaves the period unprotected.
+		frappe.db.set_value("Accounting Period", period.name, {"disabled": 0, OWNER_FIELD: None})
+		health = native_lock.lock_health(close)
+		self.assertEqual(health["status"], "Failed")
+		self.assertIn("no longer owned", " ".join(health["problems"]))
 
 	def test_new_period_cannot_claim_ownership(self):
 		period = frappe.get_doc(
@@ -370,10 +395,34 @@ class TestHardClose(MonthlyCloseTestCase):
 		self.assertTrue(close.revalidation_required)
 		self.assertFalse(frappe.db.get_value("Accounting Period", close.accounting_period, "disabled"))
 
-		# Nothing changed in the later month's balances, so it revalidates.
-		with as_user(MANAGER):
-			closing.confirm_revalidation(later)
-		self.assertFalse(frappe.db.get_value("Monthly Close", later, "revalidation_required"))
+		# The earlier month is still open: nothing can be revalidated yet.
+		with as_user(REVIEWER):
+			self.assertRaises(frappe.ValidationError, closing.confirm_revalidation, later, "Balances agreed")
+
+		# Reclose the earlier month without changing anything.
+		reclose(earlier)
+
+		with as_user(REVIEWER):
+			self.assertRaises(frappe.ValidationError, closing.confirm_revalidation, later, " ")
+			closing.confirm_revalidation(later, "Opening balances agreed to the reclosed month")
+		close.reload()
+		self.assertFalse(close.revalidation_required)
+		self.assertEqual(close.revalidated_by, REVIEWER)
+		self.assertFalse(frappe.db.get_value("Accounting Period", close.accounting_period, "disabled"))
+
+	def test_revalidation_requires_earlier_month_closed(self):
+		"""Changed carried-forward balances are never accepted by clearing a flag."""
+		earlier = drive_to_closed(4)
+		later = drive_to_closed(3, cutover=False)
+		reopen_close(earlier)
+		make_je(add_days(month(4), 3), 77)  # a correction in the reopened month
+		reclose(earlier)
+
+		with as_user(REVIEWER):
+			self.assertRaisesRegex(
+				frappe.ValidationError, "changed", closing.confirm_revalidation, later, "Looked fine"
+			)
+		self.assertTrue(frappe.db.get_value("Monthly Close", later, "revalidation_required"))
 
 	def test_review_freezes_checklist(self):
 		name = drive_to_approved(3)
@@ -382,6 +431,18 @@ class TestHardClose(MonthlyCloseTestCase):
 		with as_user(PREPARER):
 			self.assertRaises(frappe.ValidationError, task.save)
 		self.assertIn(frappe.db.get_value("Monthly Close", name, "state"), (APPROVED, READY_FOR_REVIEW))
+
+
+def reclose(name: str):
+	with as_user(PREPARER):
+		lifecycle.resume_close(name)
+	complete_tasks(name)
+	run_checks(name)
+	with as_user(PREPARER):
+		lifecycle.submit_for_review(name)
+	with as_user(REVIEWER):
+		lifecycle.approve(name)
+	return hard_close(name)
 
 
 def closed_rows():

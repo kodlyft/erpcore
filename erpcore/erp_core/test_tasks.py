@@ -44,7 +44,7 @@ class TestTasks(ERPCoreTestCase):
 		self.assertEqual(frappe.db.get_value("Cheque Leaf", leaf.name, "status"), LEAF_CLEARED)
 
 	def test_reconcile_reopens_a_leaf_whose_clearance_was_undone(self):
-		leaf, _ = self.issued_leaf()
+		leaf = self.issued_leaf()[0]
 		frappe.db.set_value("Cheque Leaf", leaf.name, {"status": LEAF_CLEARED, "clearance_date": nowdate()})
 
 		reconcile_cheque_leaf_status()

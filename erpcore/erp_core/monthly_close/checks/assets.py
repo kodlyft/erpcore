@@ -5,7 +5,8 @@
 
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.query_builder.functions import Max
+from frappe.utils import flt, getdate
 
 from erpcore.erp_core.monthly_close.checks.registry import (
 	BLOCKER,
@@ -75,14 +76,22 @@ def depreciation_due(ctx: CheckContext) -> Finding:
 		count=len(rows),
 		amount=flt(sum(flt(r.depreciation_amount) for r in rows), ctx.precision),
 		samples=bounded(rows, ctx.sample_limit),
+		identities=rows,
 		route="query-report/Fixed Asset Register",
 	)
 
 
-def _deferred_items(ctx: CheckContext, invoice_doctype: str, enable_field: str, account_field: str):
+def deferred_items(ctx: CheckContext, invoice_doctype: str, enable_field: str, account_field: str):
+	"""Every submitted deferred line that started by month end, with its last *posted* booking.
+
+	Mirrors ERPNext's `deferred_revenue.get_booking_dates`, which takes the later of
+	the last GL Entry on the deferred account for the line and the last Journal
+	Entry referencing it, except that only submitted journals count here: native
+	code also counts draft journals (`docstatus < 2`), which have posted nothing.
+	"""
 	item = frappe.qb.DocType(f"{invoice_doctype} Item")
 	invoice = frappe.qb.DocType(invoice_doctype)
-	return (
+	lines = (
 		frappe.qb.from_(item)
 		.inner_join(invoice)
 		.on(invoice.name == item.parent)
@@ -92,50 +101,99 @@ def _deferred_items(ctx: CheckContext, invoice_doctype: str, enable_field: str, 
 			item.service_start_date,
 			item.service_end_date,
 			item.service_stop_date,
-			item[account_field],
+			item[account_field].as_("deferred_account"),
 			item.base_net_amount,
 		)
 		.where(invoice.company == ctx.company)
 		.where(invoice.docstatus == 1)
 		.where(item[enable_field] == 1)
 		.where(item.service_start_date <= ctx.period_end)
-		.where(item.service_end_date >= ctx.period_start)
 		.run(as_dict=True)
 	)
+	if not lines:
+		return []
+
+	names = [line.name for line in lines]
+	gle = frappe.qb.DocType("GL Entry")
+	gl_booked = {
+		(row.voucher_detail_no, row.account): row.booked_to
+		for row in (
+			frappe.qb.from_(gle)
+			.select(gle.voucher_detail_no, gle.account, Max(gle.posting_date).as_("booked_to"))
+			.where(gle.company == ctx.company)
+			.where(gle.voucher_type == invoice_doctype)
+			.where(gle.voucher_detail_no.isin(names))
+			.where(gle.is_cancelled == 0)
+			.where(gle.posting_date <= ctx.period_end)
+			.groupby(gle.voucher_detail_no, gle.account)
+			.run(as_dict=True)
+		)
+	}
+
+	je = frappe.qb.DocType("Journal Entry")
+	jea = frappe.qb.DocType("Journal Entry Account")
+	journals = (
+		frappe.qb.from_(je)
+		.inner_join(jea)
+		.on(jea.parent == je.name)
+		.select(jea.reference_detail_no, jea.account, je.name, je.docstatus, je.posting_date)
+		.where(je.docstatus < 2)
+		.where(jea.reference_type == invoice_doctype)
+		.where(jea.reference_detail_no.isin(names))
+		.run(as_dict=True)
+	)
+
+	for line in lines:
+		line.gl_booked_to = gl_booked.get((line.name, line.deferred_account))
+		posted = [
+			j.posting_date
+			for j in journals
+			if j.reference_detail_no == line.name
+			and j.account == line.deferred_account
+			and j.docstatus == 1
+			and getdate(j.posting_date) <= getdate(ctx.period_end)
+		]
+		line.je_booked_to = max(posted) if posted else None
+		drafts = sorted({j.name for j in journals if j.reference_detail_no == line.name and j.docstatus == 0})
+		line.draft_journals = ",".join(drafts) or None
+	return lines
 
 
 @register_check(
 	"deferred_due",
-	version=1,
+	version=2,
 	label="Deferred revenue and expense due through month end",
 	default_severity=WARNING,
-	description="Invoice lines with deferred revenue/expense whose booking through month end is still pending, judged with ERPNext's own booking-date logic. Run Process Deferred Accounting to book them.",
+	description="Every submitted deferred revenue/expense line, including older lines whose service ended before this month, that is not booked through month end (or its service end/stop date, if earlier). Only submitted bookings count; a draft journal is reported, not treated as booked. Run Process Deferred Accounting to book them.",
 )
 def deferred_due(ctx: CheckContext) -> Finding:
-	from erpnext.accounts.deferred_revenue import get_booking_dates
-
 	pending, examined = [], 0
 	for invoice_doctype, enable_field, account_field in (
 		("Sales Invoice", "enable_deferred_revenue", "deferred_revenue_account"),
 		("Purchase Invoice", "enable_deferred_expense", "deferred_expense_account"),
 	):
-		for row in _deferred_items(ctx, invoice_doctype, enable_field, account_field):
+		for row in deferred_items(ctx, invoice_doctype, enable_field, account_field):
 			examined += 1
-			invoice = frappe._dict(doctype=invoice_doctype, name=row.parent, company=ctx.company)
-			start, end, _last = get_booking_dates(invoice, row, posting_date=ctx.period_end)
-			if start and end:
-				pending.append(
-					{
-						"invoice_type": invoice_doctype,
-						"invoice": row.parent,
-						"item_row": row.name,
-						"unbooked_from": start,
-						"unbooked_to": end,
-					}
-				)
+			service_end = getdate(row.service_stop_date or row.service_end_date)
+			required_to = min(getdate(ctx.period_end), service_end)
+			booked = [getdate(d) for d in (row.gl_booked_to, row.je_booked_to) if d]
+			booked_to = max(booked) if booked else None
+			if booked_to and booked_to >= required_to:
+				continue
+			pending.append(
+				{
+					"invoice_type": invoice_doctype,
+					"invoice": row.parent,
+					"item_row": row.name,
+					"service_end": service_end,
+					"booked_to": booked_to,
+					"required_to": required_to,
+					"draft_journals": row.draft_journals,
+				}
+			)
 
 	if not examined:
-		return Finding(NOT_APPLICABLE, _("No deferred revenue or expense lines overlap the month."))
+		return Finding(NOT_APPLICABLE, _("No deferred revenue or expense lines started by month end."))
 
 	runs = frappe.get_all(
 		"Process Deferred Accounting",
@@ -152,11 +210,19 @@ def deferred_due(ctx: CheckContext) -> Finding:
 			PASSED, _("{0} deferred lines are booked through month end.").format(examined) + evidence
 		)
 
+	in_drafts = [p for p in pending if p["draft_journals"]]
 	return Finding(
 		FINDING,
 		_("{0} of {1} deferred lines still need booking through month end.").format(len(pending), examined)
+		+ (
+			" "
+			+ _("{0} of them are booked only in draft journals, which post nothing.").format(len(in_drafts))
+			if in_drafts
+			else ""
+		)
 		+ evidence,
 		count=len(pending),
 		samples=bounded(pending, ctx.sample_limit),
+		identities=pending,
 		route="process-deferred-accounting/new",
 	)

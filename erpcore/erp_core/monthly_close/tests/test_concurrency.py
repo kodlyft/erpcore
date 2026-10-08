@@ -31,6 +31,35 @@ from erpcore.tests.utils import TEST_COMPANY
 
 OFFSET = 30  # a month no other test touches
 MARKER = "erpcore_mc_concurrency_marker"
+RACE_REMARK = "erpcore monthly close race"
+
+
+def race_je(posting_date, amount: float):
+	"""A real bank-to-cash journal, submitted through the normal voucher path."""
+	cost_center = frappe.get_cached_value("Company", TEST_COMPANY, "cost_center")
+	je = frappe.get_doc(
+		{
+			"doctype": "Journal Entry",
+			"company": TEST_COMPANY,
+			"posting_date": posting_date,
+			"user_remark": RACE_REMARK,
+			"accounts": [
+				{
+					"account": "_Test Bank - _TC",
+					"debit_in_account_currency": amount,
+					"cost_center": cost_center,
+				},
+				{
+					"account": "_Test Cash - _TC",
+					"credit_in_account_currency": amount,
+					"cost_center": cost_center,
+				},
+			],
+		}
+	)
+	je.insert(ignore_permissions=True)
+	je.submit()
+	return je.name
 
 
 def in_thread(target, *args):
@@ -76,8 +105,13 @@ class TestConcurrency(MonthlyCloseTestCase):
 		for name in frappe.get_all(
 			"Monthly Close", filters={"company": TEST_COMPANY, "period_start": self.start}, pluck="name"
 		):
-			frappe.db.delete("Monthly Close Event", {"monthly_close": name})
+			for doctype in ("Monthly Close Event", "Monthly Close Task"):
+				frappe.db.delete(doctype, {"monthly_close": name})
 			frappe.db.delete("Monthly Close", {"name": name})
+		for je in frappe.get_all("Journal Entry", filters={"user_remark": RACE_REMARK}, pluck="name"):
+			frappe.db.delete("GL Entry", {"voucher_no": je})
+			frappe.db.delete("Journal Entry Account", {"parent": je})
+			frappe.db.delete("Journal Entry", {"name": je})
 		frappe.db.set_global(MARKER, None)
 		frappe.db.commit()  # nosemgrep
 
@@ -96,11 +130,11 @@ class TestConcurrency(MonthlyCloseTestCase):
 			barrier.wait()
 			return lifecycle.create_close(TEST_COMPANY, self.start)
 
-		threads = [in_thread(create) for _ in range(2)]
-		for thread, _result in threads:
+		threads = [in_thread(create), in_thread(create)]
+		for thread in [pair[0] for pair in threads]:
 			thread.join(60)
 
-		results = [r for _t, r in threads]
+		results = [pair[1] for pair in threads]
 		created = [r["value"] for r in results if "value" in r]
 		errors = [r["error"] for r in results if "error" in r]
 		self.assertEqual(len(created), 1, results)
@@ -180,3 +214,126 @@ class TestConcurrency(MonthlyCloseTestCase):
 
 		self.assertNotIn("error", result, result)
 		self.assertEqual(row.revision, 2, "the second actor must see the first actor's committed change")
+
+	def test_real_journal_inflight_is_seen_by_close(self):
+		"""A JE submitting into the month holds the gate; the close waits and then sees its GL rows."""
+		name = self.make_committed_close()
+		holding = threading.Event()
+		posting_date = add_days(self.start, 4)
+
+		def post():
+			voucher = race_je(posting_date, 41)
+			holding.set()
+			time.sleep(2)  # the voucher's transaction is still open, holding the shared gate lock
+			return voucher
+
+		thread, result = in_thread(post)
+		self.assertTrue(holding.wait(60), result)
+
+		txn.begin("unused")
+		started = time.monotonic()
+		acquire_close_gate(name)
+		waited = time.monotonic() - started
+		from erpcore.erp_core.monthly_close import fingerprint
+
+		close = frappe.get_doc("Monthly Close", name)
+		components_after_lock = fingerprint.compute(close)[1]
+		gl = frappe.db.sql(
+			"""select sum(gle.debit), count(*) from `tabGL Entry` gle
+			inner join `tabJournal Entry` je on je.name = gle.voucher_no
+			where je.user_remark = %s and gle.is_cancelled = 0""",
+			RACE_REMARK,
+		)[0]
+		frappe.db.rollback()
+		thread.join(60)
+
+		self.assertNotIn("error", result, result)
+		self.assertGreaterEqual(waited, 1.5, "the close must wait for the in-flight voucher")
+		self.assertEqual((float(gl[0] or 0), gl[1]), (41.0, 2), "the close must see the committed GL rows")
+		self.assertTrue(components_after_lock["gl"])
+
+	def test_real_journal_after_close_lock_is_refused(self):
+		name = self.make_committed_close()
+		txn.begin("unused")
+		acquire_close_gate(name)
+		frappe.db.sql("update `tabMonthly Close` set state = 'Closing' where name = %s", name)
+
+		thread, result = in_thread(race_je, add_days(self.start, 6), 17)
+		time.sleep(2)
+		self.assertTrue(thread.is_alive(), "the voucher must wait while the close holds the gate")
+		frappe.db.commit()  # nosemgrep
+		thread.join(60)
+
+		self.assertIsInstance(result.get("error"), ClosedMonthError, result)
+		self.assertFalse(
+			frappe.db.sql(
+				"""select gle.name from `tabGL Entry` gle
+				inner join `tabJournal Entry` je on je.name = gle.voucher_no
+				where je.user_remark = %s""",
+				RACE_REMARK,
+			),
+			"no GL row of the refused voucher may survive",
+		)
+
+	def test_task_edit_waits_for_review_and_is_refused(self):
+		name = self.make_committed_close()
+		frappe.set_user(PREPARER)
+		lifecycle.start_close(name)
+		frappe.set_user("Administrator")
+		frappe.db.commit()  # nosemgrep
+		task_name = frappe.db.get_value(
+			"Monthly Close Task", {"monthly_close": name, "task_key": "prep"}, "name"
+		)
+
+		# Review takes the close lock and moves the state, not yet committed.
+		txn.begin("unused")
+		acquire_close_gate(name)
+		frappe.db.sql("update `tabMonthly Close` set state = 'Ready for Review' where name = %s", name)
+
+		def edit():
+			frappe.set_user(PREPARER)
+			task = frappe.get_doc("Monthly Close Task", task_name)
+			task.status = "Done"
+			task.save()
+
+		thread, result = in_thread(edit)
+		time.sleep(2)
+		self.assertTrue(thread.is_alive(), "the task edit must wait for the review transaction")
+		frappe.db.commit()  # nosemgrep
+		thread.join(60)
+
+		self.assertIsInstance(result.get("error"), frappe.ValidationError, result)
+		self.assertEqual(frappe.db.get_value("Monthly Close Task", task_name, "status"), "Open")
+
+	def test_request_read_view_is_refreshed_before_lock(self):
+		"""A request that read before taking the close lock must not act on that stale view."""
+		name = self.make_committed_close()
+		frappe.set_user(PREPARER)
+		lifecycle.start_close(name)
+		frappe.set_user("Administrator")
+		frappe.db.commit()  # nosemgrep
+		task_name = frappe.db.get_value(
+			"Monthly Close Task", {"monthly_close": name, "task_key": "prep"}, "name"
+		)
+
+		def status():
+			return frappe.db.sql("select status from `tabMonthly Close Task` where name = %s", task_name)[0][
+				0
+			]
+
+		txn.begin("unused")
+		self.assertEqual(status(), "Open")  # this plain read opens the request's read view
+
+		def complete():
+			frappe.db.sql("update `tabMonthly Close Task` set status = 'Done' where name = %s", task_name)
+			frappe.db.sql("update `tabMonthly Close` set revision = revision + 1 where name = %s", name)
+
+		thread, result = in_thread(complete)
+		thread.join(60)
+		self.assertNotIn("error", result, result)
+		self.assertEqual(status(), "Open", "REPEATABLE READ: the old view does not see the commit")
+
+		close = lifecycle.lock_close(name)
+		self.assertEqual(close.revision, 2, "the close row comes from a locking read")
+		self.assertEqual(status(), "Done", "after lock_close, plain reads see every commit")
+		frappe.db.rollback()

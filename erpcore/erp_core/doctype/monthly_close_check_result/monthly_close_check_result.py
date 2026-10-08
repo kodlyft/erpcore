@@ -20,6 +20,7 @@ class MonthlyCloseCheckResult(Document):
 		count: DF.Int
 		evaluated_at: DF.Datetime | None
 		finding_signature: DF.Data | None
+		identity_count: DF.Int
 		message: DF.SmallText | None
 		parent: DF.Data
 		parentfield: DF.Data
@@ -29,6 +30,7 @@ class MonthlyCloseCheckResult(Document):
 		severity: DF.Data | None
 		status: DF.Literal["Passed", "Warning", "Blocker", "Not Applicable", "Error"]
 		tolerance: DF.Float
+		waivable: DF.Check
 	# end: auto-generated types
 
 	pass

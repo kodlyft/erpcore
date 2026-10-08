@@ -1,6 +1,7 @@
 # Copyright (c) 2026, Kodlyft and contributors
 # For license information, please see license.txt
 
+import hashlib
 import json
 
 import frappe
@@ -41,7 +42,7 @@ class MonthlyClosePolicy(Document):
 	# end: auto-generated types
 
 	def validate(self):
-		require_company_access(self.company)
+		require_company_access(self.company, self.doctype)
 		self.cutover_period = get_first_day(getdate(self.cutover_period))
 		self.validate_cutover()
 		self.seed_checks()
@@ -102,16 +103,18 @@ class MonthlyClosePolicy(Document):
 				frappe.throw(_("Row {0}: pick a ledger account, not group {1}.").format(row.idx, row.account))
 
 	def bump_version(self):
-		if self.is_new():
-			self.policy_version = self.policy_version or 1
+		"""The server owns the version. A client-sent value is ignored on insert, update and import."""
+		before = None if self.is_new() else self.get_doc_before_save()
+		if not before:
+			self.policy_version = 1
 			return
 
-		before = self.get_doc_before_save()
-		if before and _signature(before) != _signature(self):
-			self.policy_version = cint(before.policy_version) + 1
+		self.policy_version = cint(before.policy_version)
+		if policy_signature(before) != policy_signature(self):
+			self.policy_version += 1
 
 
-def _signature(doc) -> str:
+def policy_signature(doc) -> str:
 	return json.dumps(
 		{
 			"fields": [str(doc.get(f) or "") for f in VERSIONED_FIELDS],
@@ -122,3 +125,40 @@ def _signature(doc) -> str:
 		},
 		sort_keys=True,
 	)
+
+
+def frozen_policy(policy) -> dict:
+	"""Everything a close revision was evaluated under: controls, checks with code versions, accounts."""
+	from erpcore.erp_core.monthly_close.checks.registry import get_checks
+
+	registered = get_checks()
+	configured = {row.check_id: row for row in policy.checks}
+	checks = []
+	for check_id, definition in sorted(registered.items()):
+		row = configured.get(check_id)
+		checks.append(
+			{
+				"check_id": check_id,
+				"check_version": definition.version,
+				"enabled": cint(row.enabled) if row else 1,
+				"severity": (row.severity if row and row.severity else definition.default_severity),
+				"tolerance": float(row.tolerance or 0) if row else 0.0,
+				"configured": bool(row),
+			}
+		)
+	return {
+		"company": policy.company,
+		"policy_version": cint(policy.policy_version),
+		"enabled": cint(policy.enabled),
+		"cutover_period": str(policy.cutover_period or ""),
+		"template": policy.template,
+		"allow_self_approval": cint(policy.allow_self_approval),
+		"checks": checks,
+		"suspense_accounts": [
+			{"account": r.account, "tolerance": float(r.tolerance or 0)} for r in policy.suspense_accounts
+		],
+	}
+
+
+def policy_hash(payload: dict) -> str:
+	return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()

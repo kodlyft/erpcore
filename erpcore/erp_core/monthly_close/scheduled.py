@@ -9,7 +9,7 @@ as events and reported; a person decides what to do.
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, add_to_date, cint, getdate, now_datetime, nowdate
+from frappe.utils import add_days, add_to_date, cint, get_datetime, getdate, now_datetime, nowdate
 
 from erpcore.erp_core.monthly_close import native_lock, txn
 from erpcore.erp_core.monthly_close.constants import (
@@ -54,23 +54,45 @@ def check_lock_integrity():
 
 
 def recover_stuck_runs():
-	"""Mark runs a dead worker left behind as Failed so a new run can be requested."""
-	cutoff = add_to_date(now_datetime(), hours=-STUCK_AFTER_HOURS)
-	for name in frappe.get_all(
+	"""Mark runs a dead worker left behind as Failed so a new run can be requested.
+
+	A Running run is dead once its claim lease has expired; a Queued run once it
+	has waited STUCK_AFTER_HOURS. The claim token is cleared, so the dead worker
+	(should it ever resume) writes nothing.
+	"""
+	now = now_datetime()
+	cutoff = add_to_date(now, hours=-STUCK_AFTER_HOURS)
+	for run in frappe.get_all(
 		CHECK_RUN_DOCTYPE,
-		filters={"status": ["in", [RUN_QUEUED, RUN_RUNNING]], "modified": ["<", cutoff]},
-		pluck="name",
+		filters={"status": ["in", [RUN_QUEUED, RUN_RUNNING]]},
+		fields=["name", "status", "lease_expires_at", "creation"],
 	):
+		expired = (
+			run.lease_expires_at and get_datetime(run.lease_expires_at) < now
+			if run.status == RUN_RUNNING
+			else get_datetime(run.creation) < cutoff
+		)
+		if not expired:
+			continue
 		frappe.db.set_value(
 			CHECK_RUN_DOCTYPE,
-			name,
+			run.name,
 			{
 				"status": RUN_FAILED,
-				"error": _("The worker did not finish within {0} hours.").format(STUCK_AFTER_HOURS),
+				"claim_token": None,
+				"lease_expires_at": None,
+				"error": _("The worker stopped without finishing; request the checks again."),
 			},
 			update_modified=False,
 		)
 	txn.commit()
+
+
+def recover_stalled_closes():
+	"""Hard close / seal stages whose worker died become retryable failures. Never unlocks."""
+	from erpcore.erp_core.monthly_close.closing import recover_stalled_closes as recover
+
+	recover()
 
 
 def send_task_reminders():

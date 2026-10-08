@@ -72,11 +72,11 @@ class ChequeLeaf(Document):
 		if self.cheque_book and frappe.db.exists("Cheque Book", self.cheque_book):
 			update_counts(self.cheque_book)
 
-	def _require_manage_permission(self):
+	def require_manage_permission(self):
 		if not frappe.has_permission("Cheque Leaf", "write"):
 			frappe.throw(_("You are not permitted to change cheque status."), frappe.PermissionError)
 
-	def _resolve_reason(self, reason):
+	def resolve_reason(self, reason):
 		if frappe.db.get_single_value("Cheque Settings", "require_void_reason") and not reason:
 			frappe.throw(_("A reason is required."), title=_("Reason Required"))
 
@@ -85,7 +85,7 @@ class ChequeLeaf(Document):
 
 		return reason
 
-	def _apply_action(self, status, reason, remarks):
+	def apply_action(self, status, reason, remarks):
 		self.db_set(
 			{
 				"status": status,
@@ -100,7 +100,7 @@ class ChequeLeaf(Document):
 	@frappe.whitelist()
 	def void_leaf(self, reason: str | None = None, remarks: str | None = None):
 		"""Void an unused or reserved cheque, e.g. a misprint."""
-		self._require_manage_permission()
+		self.require_manage_permission()
 
 		if self.status not in (LEAF_UNUSED, LEAF_RESERVED):
 			frappe.throw(
@@ -116,42 +116,42 @@ class ChequeLeaf(Document):
 				)
 			)
 
-		self._apply_action(LEAF_VOID, self._resolve_reason(reason), remarks)
+		self.apply_action(LEAF_VOID, self.resolve_reason(reason), remarks)
 		return self.status
 
 	@frappe.whitelist()
 	def mark_lost(self, reason: str | None = None, remarks: str | None = None):
 		"""Record a cheque that went missing before it was ever issued."""
-		self._require_manage_permission()
+		self.require_manage_permission()
 
 		if self.status not in (LEAF_UNUSED, LEAF_RESERVED):
 			frappe.throw(_("Only unused cheques can be marked lost."))
 
-		self._apply_action(LEAF_LOST, self._resolve_reason(reason), remarks)
+		self.apply_action(LEAF_LOST, self.resolve_reason(reason), remarks)
 		return self.status
 
 	@frappe.whitelist()
 	def mark_stopped(self, reason: str | None = None, remarks: str | None = None):
 		"""Stop payment on a cheque already handed over."""
-		self._require_manage_permission()
+		self.require_manage_permission()
 
 		if self.status != LEAF_ISSUED:
 			frappe.throw(
 				_("Only issued cheques can be stopped. This one is {0}.").format(frappe.bold(_(self.status)))
 			)
 
-		self._apply_action(LEAF_STOPPED, self._resolve_reason(reason), remarks)
+		self.apply_action(LEAF_STOPPED, self.resolve_reason(reason), remarks)
 		return self.status
 
 	@frappe.whitelist()
 	def mark_bounced(self, reason: str | None = None, remarks: str | None = None):
 		"""Record that the bank returned this cheque unpaid."""
-		self._require_manage_permission()
+		self.require_manage_permission()
 
 		if self.status not in (LEAF_ISSUED, LEAF_CLEARED):
 			frappe.throw(_("Only issued or cleared cheques can be marked bounced."))
 
-		self._apply_action(LEAF_BOUNCED, self._resolve_reason(reason), remarks)
+		self.apply_action(LEAF_BOUNCED, self.resolve_reason(reason), remarks)
 		return self.status
 
 	@frappe.whitelist()
@@ -162,7 +162,7 @@ class ChequeLeaf(Document):
 		Gated on ``allow_void_leaf_reuse`` because a voided number staying
 		permanently traceable is the whole audit point of the register.
 		"""
-		self._require_manage_permission()
+		self.require_manage_permission()
 
 		if self.status not in (LEAF_VOID, LEAF_LOST):
 			frappe.throw(_("Only voided or lost cheques can be returned to the pool."))

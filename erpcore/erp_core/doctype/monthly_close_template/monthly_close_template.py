@@ -51,7 +51,7 @@ class MonthlyCloseTemplate(Document):
 
 		known = set(keys)
 		for row in self.tasks:
-			for dependency in _split(row.depends_on):
+			for dependency in split_keys(row.depends_on):
 				if dependency not in known:
 					frappe.throw(
 						_("Row {0}: depends on unknown task key {1}.").format(
@@ -67,13 +67,13 @@ class MonthlyCloseTemplate(Document):
 			return
 
 		before = self.get_doc_before_save()
-		if before and _signature(before) != _signature(self):
+		if before and template_signature(before) != template_signature(self):
 			self.version = cint(before.version) + 1
 
 
-def _signature(doc) -> list:
+def template_signature(doc) -> list:
 	return [[str(row.get(field) or "") for field in TASK_FIELDS] for row in doc.tasks]
 
 
-def _split(value: str | None) -> list[str]:
+def split_keys(value: str | None) -> list[str]:
 	return [part.strip() for part in (value or "").split(",") if part.strip()]

@@ -6,10 +6,15 @@
 Every transition runs the same way:
 
 1. Check role and company access.
-2. Take FOR UPDATE on the close row.
-3. Re-read the close and check the guard against the locked state.
+2. Drop a stale read view if the request has written nothing yet (txn.py),
+   then load the close row with a locking read (`FOR UPDATE`), which returns
+   its latest committed state, revision and approval fields.
+3. Check the guard against that locked state.
 4. Write the new state with the service flag set.
 5. Append an event, then notify after commit.
+
+Child records (tasks, bank workpapers, exceptions) take the same close row lock
+first when they change, so a late child edit cannot interleave with review.
 
 The `state` field is never writable from forms, REST or imports; the controller
 rejects any change made without the service flag.
@@ -23,7 +28,9 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, cint, getdate, now_datetime
 
-from erpcore.erp_core.monthly_close import fingerprint
+from erpcore.erp_core.doctype.monthly_close_policy.monthly_close_policy import frozen_policy, policy_hash
+from erpcore.erp_core.monthly_close import evidence as evidence_files
+from erpcore.erp_core.monthly_close import fingerprint, txn
 from erpcore.erp_core.monthly_close.check_runner import blocking_results, enqueue_check_run, service_write
 from erpcore.erp_core.monthly_close.constants import (
 	APPROVED,
@@ -95,11 +102,25 @@ def get_policy(company: str):
 
 
 def lock_close(name: str):
-	"""FOR UPDATE on the close row, then a fresh load of the document."""
-	acquire_close_gate(name)
-	close = frappe.get_doc(CLOSE_DOCTYPE, name)
+	"""The close as last committed, locked FOR UPDATE until the transaction ends.
+
+	`get_doc(..., for_update=True)` loads the row with a locking read, so its
+	state, revision and approval fields are current even if this request opened
+	a REPEATABLE READ view earlier. Before that, an empty read view is dropped
+	so later plain reads (tasks, runs, waivers) see every commit up to the lock.
+	"""
+	txn.fresh_read_view()
+	close = frappe.get_doc(CLOSE_DOCTYPE, name, for_update=True)
 	require_company_access(close.company)
 	return close
+
+
+def freeze_policy(close, policy) -> None:
+	"""Record the full policy the current revision is evaluated under."""
+	payload = frozen_policy(policy)
+	close.policy_version = policy.policy_version
+	close.policy_hash = policy_hash(payload)
+	close.policy_snapshot = json.dumps(payload, indent=1, sort_keys=True, default=str)
 
 
 def set_state(close, to_state: str, event_type: str, details: dict | None = None, **values):
@@ -126,17 +147,31 @@ def current_tasks(close) -> list:
 	return frappe.get_all(
 		TASK_DOCTYPE,
 		filters={"monthly_close": close.name, "revision": close.revision},
-		fields=["name", "title", "status", "is_mandatory", "evidence_required", "evidence", "task_key"],
+		fields=[
+			"name",
+			"title",
+			"status",
+			"is_mandatory",
+			"evidence_required",
+			"evidence",
+			"evidence_hash",
+			"task_key",
+		],
 		order_by="idx asc, creation asc",
 	)
 
 
 def incomplete_mandatory_tasks(close) -> list:
-	return [
-		task
-		for task in current_tasks(close)
-		if task.is_mandatory and (task.status != "Done" or (task.evidence_required and not task.evidence))
-	]
+	"""Mandatory tasks not done, or whose evidence is missing, unverified or altered since attached."""
+	incomplete = []
+	for task in current_tasks(close):
+		if not task.is_mandatory:
+			continue
+		if task.status != "Done":
+			incomplete.append(task)
+		elif task.evidence_required and evidence_files.verify(task.evidence, task.evidence_hash):
+			incomplete.append(task)
+	return incomplete
 
 
 def latest_run(close):
@@ -159,12 +194,13 @@ def require_fresh_run(close):
 			title=_("Checks Required"),
 		)
 
-	current_policy = cint(frappe.db.get_value(POLICY_DOCTYPE, close.company, "policy_version"))
-	if current_policy != cint(run.policy_version):
+	policy = frappe.get_doc(POLICY_DOCTYPE, close.company)
+	current_hash = policy_hash(frozen_policy(policy))
+	if cint(policy.policy_version) != cint(run.policy_version) or current_hash != (run.policy_hash or ""):
 		frappe.throw(
-			_("The close policy changed (version {0} to {1}) after {2} ran. Run the checks again.").format(
-				run.policy_version, current_policy, frappe.bold(run.name)
-			),
+			_(
+				"The close policy or a check's code version changed (policy version {0} to {1}) after {2} ran. Run the checks again."
+			).format(run.policy_version, policy.policy_version, frappe.bold(run.name)),
 			title=_("Stale Checks"),
 		)
 
@@ -200,7 +236,7 @@ def create_close(company: str, period_start, template: str | None = None) -> str
 	require_company_access(company)
 
 	policy = get_policy(company)
-	start, _end = month_bounds(period_start)
+	start = month_bounds(period_start)[0]
 	if policy.cutover_period and start < getdate(policy.cutover_period):
 		frappe.throw(
 			_("{0} is before the first managed month {1} in the policy for {2}.").format(
@@ -301,7 +337,7 @@ def start_close(name: str) -> None:
 	snapshot, template_version = snapshot_template(close.template)
 	close.template_snapshot = snapshot
 	close.template_version = template_version
-	close.policy_version = policy.policy_version
+	freeze_policy(close, policy)
 	close.preparer = close.preparer or frappe.session.user
 	set_state(
 		close,
@@ -320,7 +356,8 @@ def resume_close(name: str) -> None:
 	close = lock_close(name)
 	require_state(close, REOPENED)
 	policy = get_policy(close.company)
-	set_state(close, IN_PROGRESS, "Resumed", policy_version=policy.policy_version)
+	freeze_policy(close, policy)
+	set_state(close, IN_PROGRESS, "Resumed", details={"policy_hash": close.policy_hash})
 	create_tasks(close)
 
 
@@ -330,11 +367,18 @@ def request_check_run(name: str) -> str:
 	close = lock_close(name)
 	require_state(close, IN_PROGRESS, READY_FOR_REVIEW, REOPENED)
 
-	# Use the policy as it is now; a newer policy version invalidates older runs.
 	policy = get_policy(close.company)
-	if policy.policy_version != close.policy_version:
+	previous_hash = close.policy_hash
+	freeze_policy(close, policy)
+	if close.policy_hash != previous_hash:
 		with service_write():
-			close.db_set("policy_version", policy.policy_version)
+			close.db_set(
+				{
+					"policy_version": close.policy_version,
+					"policy_hash": close.policy_hash,
+					"policy_snapshot": close.policy_snapshot,
+				}
+			)
 
 	pending = frappe.db.exists(
 		CHECK_RUN_DOCTYPE,
@@ -486,6 +530,19 @@ def request_waiver(
 				_(row.status)
 			)
 		)
+	if not cint(row.waivable):
+		frappe.throw(
+			_(
+				"{0} cannot be waived: it is an integrity failure (or a finding whose rows are not fully identified). Fix the underlying data."
+			).format(frappe.bold(row.check_label)),
+			title=_("Not Waivable"),
+		)
+
+	evidence_hash = None
+	if evidence:
+		evidence_hash = evidence_files.resolve(
+			evidence, _("Evidence"), close.company, [(CLOSE_DOCTYPE, close.name)]
+		).sha256
 
 	waiver = frappe.get_doc(
 		{
@@ -497,11 +554,13 @@ def request_waiver(
 			"check_result": row.name,
 			"check_id": row.check_id,
 			"check_label": row.check_label,
+			"check_version": row.check_version,
 			"finding_status": row.status,
 			"finding_signature": row.finding_signature,
 			"finding_message": row.message,
 			"explanation": explanation,
 			"evidence": evidence,
+			"evidence_hash": evidence_hash,
 			"expires_on": expires_on,
 			"status": REQUESTED,
 			"requested_by": frappe.session.user,
@@ -567,20 +626,39 @@ def certify_bank_account(name: str) -> None:
 	cert = frappe.get_doc("Monthly Close Bank Certification", name, for_update=True)
 	if cert.revision != close.revision:
 		frappe.throw(_("This workpaper belongs to an earlier revision."))
+	if cert.status == "Certified":
+		frappe.throw(_("This workpaper is already certified."))
 	if not cert.statement_date or not cert.statement_file:
 		frappe.throw(_("Statement date and the statement itself must be attached before certifying."))
+
+	problem = evidence_files.verify(cert.statement_file, cert.statement_hash)
+	if problem:
+		frappe.throw(_("The statement cannot be certified: {0}.").format(problem))
+
+	cert.refresh_balances()
+	if cert.needs_bridging() and not (cert.bridging_note or "").strip():
+		frappe.throw(
+			_(
+				"The statement is dated {0}, not month end {1}. Record in Bridging to Month End how the balance was rolled to month end."
+			).format(cert.statement_date, cert.period_end),
+			title=_("Statement Not at Month End"),
+		)
+	if cert.unexplained_difference and not (cert.difference_explanation or "").strip():
+		frappe.throw(_("Explain the difference before certifying."))
 
 	policy = get_policy(close.company)
 	require_different_actor(
 		cert.prepared_by or cert.owner, cint(policy.allow_self_approval), _("a bank workpaper")
 	)
-	cert.refresh_balances()
-	if cert.unexplained_difference and not (cert.difference_explanation or "").strip():
-		frappe.throw(_("Explain the difference before certifying."))
+
+	from erpcore.erp_core.doctype.monthly_close_bank_certification.monthly_close_bank_certification import (
+		certified_content_hash,
+	)
 
 	cert.status = "Certified"
 	cert.certified_by = frappe.session.user
 	cert.certified_at = now_datetime()
+	cert.certified_hash = certified_content_hash(cert)
 	with service_write():
 		cert.save(ignore_permissions=True)
 	log_event(close, "Bank Certified", reference_doctype=cert.doctype, reference_name=cert.name)

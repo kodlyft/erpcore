@@ -70,7 +70,21 @@ def required_doctypes() -> list[str]:
 
 
 def period_name_for(close) -> str:
-	return f"Monthly Close {month_label(close.period_start)}"
+	"""`period_name` is unique across the whole site, not per company, so it carries the company.
+
+	The company name, not its abbreviation, keeps it stable and unique; it is
+	cut to fit the 140-character field, with a hash of the full name appended
+	when cutting, so two long names never collide.
+	"""
+	import hashlib
+
+	prefix = f"Monthly Close {month_label(close.period_start)} "
+	company = close.company
+	room = 140 - len(prefix) - len(" - ") - len(frappe.get_cached_value("Company", company, "abbr") or "")
+	if len(company) > room:
+		suffix = "~" + hashlib.sha256(company.encode()).hexdigest()[:8]
+		company = company[: room - len(suffix)] + suffix
+	return prefix + company
 
 
 def overlapping_periods(company: str, start, end) -> list[frappe._dict]:
@@ -286,10 +300,27 @@ def lock_health(close) -> dict:
 	if disabled:
 		problems.insert(0, _("Accounting Period {0} is disabled.").format(close.accounting_period))
 
+	owner = frappe.db.get_value("Accounting Period", close.accounting_period, OWNER_FIELD)
 	if close.lock_owned:
-		owner = frappe.db.get_value("Accounting Period", close.accounting_period, OWNER_FIELD)
-		if owner and owner != close.name:
-			problems.append(_("Accounting Period ownership was changed to {0}.").format(owner))
+		if owner != close.name:
+			problems.append(
+				_("Accounting Period {0} is no longer owned by this close (owner: {1}).").format(
+					close.accounting_period, owner or _("none")
+				)
+			)
+	else:
+		if close.external_accounting_period != close.accounting_period:
+			problems.append(
+				_("Accounting Period {0} is not the associated external period {1}.").format(
+					close.accounting_period, close.external_accounting_period or _("none")
+				)
+			)
+		if owner:
+			problems.append(
+				_("Associated external Accounting Period {0} is now marked as owned by {1}.").format(
+					close.accounting_period, owner
+				)
+			)
 
 	return {"status": "Failed" if problems else "Healthy", "problems": problems}
 

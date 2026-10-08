@@ -18,12 +18,29 @@ Balance Sheet is as at month end, from the fiscal year start. Snapshots use the
 default book (`include_default_book_entries`) with no finance-book or dimension
 filter; those filters narrow reports and workpapers but never the lock, which
 is company-wide.
+
+Each sealed revision also gets two more snapshot rows:
+
+* "Close Manifest": JSON with everything the revision was closed on — the
+  close record, the frozen policy and template, the approved and final check
+  runs with every result and finding signature, tasks with actors and
+  evidence hashes, exceptions, bank workpapers with their certified hashes,
+  reopen requests and the event trail so far, the native lock and its Closed
+  Documents, every report snapshot's filters and hash, currency/precision, and
+  the app versions with their git commits.
+* "Close Packet": a readable HTML packet rendered only from that manifest.
+
+Neither is regenerated later. Reopening marks them Superseded and the next
+revision seals its own, so the original packet can always be produced as it
+was approved, from `export_revision_packet`. The Monthly Close print format is
+the live dashboard view, not the historical record.
 """
 
 import hashlib
 import json
 
 import frappe
+from frappe import _
 from frappe.utils import cint, now_datetime
 
 from erpcore.erp_core.monthly_close.check_runner import as_system_user
@@ -139,16 +156,24 @@ def report_specs(close) -> list[dict]:
 
 
 def app_versions() -> dict:
+	"""Installed versions with the git commit of each app, as far as they can be read."""
+	from frappe.utils.change_log import get_app_last_commit_ref
+
 	versions = {}
 	for app in ("frappe", "erpnext", "erpcore"):
 		try:
-			versions[app] = frappe.get_attr(f"{app}.__version__")
+			version = frappe.get_attr(f"{app}.__version__")
 		except Exception:
-			versions[app] = None
+			version = None
+		try:
+			commit = get_app_last_commit_ref(app)
+		except Exception:
+			commit = None
+		versions[app] = {"version": version, "commit": commit}
 	return versions
 
 
-def _run(spec) -> tuple[list, list]:
+def run_report(spec) -> tuple[list, list]:
 	execute = frappe.get_attr(f"{REPORT_MODULES[spec['report']]}.execute")
 	result = execute(frappe._dict(spec["filters"])) or ([], [])
 	columns, rows = result[0] or [], result[1] or []
@@ -173,7 +198,7 @@ def capture(close) -> list[str]:
 
 	with as_system_user():
 		for spec in report_specs(close):
-			columns, rows = _run(spec)
+			columns, rows = run_report(spec)
 			payload = {
 				"close": close.name,
 				"company": close.company,
@@ -186,45 +211,199 @@ def capture(close) -> list[str]:
 				"columns": columns,
 				"rows": rows,
 			}
-			content = payload_bytes(payload)
-			digest = sha256(content)
-
-			snap = frappe.get_doc(
-				{
-					"doctype": SNAPSHOT_DOCTYPE,
-					"monthly_close": close.name,
-					"company": close.company,
-					"revision": close.revision,
-					"report_name": spec["report"],
-					"scope": spec["scope"],
-					"from_date": spec.get("from_date"),
-					"to_date": spec.get("to_date"),
-					"filters_json": json.dumps(spec["filters"], default=str, sort_keys=True, indent=1),
-					"row_count": len(rows),
-					"sha256": digest,
-					"status": SNAPSHOT_ORIGINAL,
-					"generated_at": payload["generated_at"],
-					"app_versions": json.dumps(versions, sort_keys=True),
-				}
+			created.append(
+				store_snapshot(
+					close,
+					spec["report"],
+					spec["scope"],
+					payload_bytes(payload),
+					"json",
+					versions,
+					filters=spec["filters"],
+					from_date=spec.get("from_date"),
+					to_date=spec.get("to_date"),
+					row_count=len(rows),
+					generated_at=payload["generated_at"],
+				)
 			)
-			snap.flags.erpcore_service = True
-			snap.insert(ignore_permissions=True)
-
-			file_doc = frappe.get_doc(
-				{
-					"doctype": "File",
-					"file_name": f"{close.name}-r{close.revision}-{frappe.scrub(spec['report'])}-{frappe.scrub(spec['scope'])}.json",
-					"is_private": 1,
-					"content": content,
-					"attached_to_doctype": SNAPSHOT_DOCTYPE,
-					"attached_to_name": snap.name,
-				}
-			)
-			file_doc.insert(ignore_permissions=True)
-			frappe.db.set_value(SNAPSHOT_DOCTYPE, snap.name, "file", file_doc.file_url, update_modified=False)
-			created.append(snap.name)
 
 	return created
+
+
+def store_snapshot(
+	close,
+	report_name: str,
+	scope: str,
+	content: bytes,
+	extension: str,
+	versions: dict,
+	filters: dict | None = None,
+	from_date=None,
+	to_date=None,
+	row_count: int = 0,
+	generated_at=None,
+) -> str:
+	"""One Snapshot row plus its private file, hashed. Runs inside the seal transaction."""
+	snap = frappe.get_doc(
+		{
+			"doctype": SNAPSHOT_DOCTYPE,
+			"monthly_close": close.name,
+			"company": close.company,
+			"revision": close.revision,
+			"report_name": report_name,
+			"scope": scope,
+			"from_date": from_date,
+			"to_date": to_date,
+			"filters_json": json.dumps(filters or {}, default=str, sort_keys=True, indent=1),
+			"row_count": row_count,
+			"sha256": sha256(content),
+			"status": SNAPSHOT_ORIGINAL,
+			"generated_at": generated_at or now_datetime(),
+			"app_versions": json.dumps(versions, sort_keys=True),
+		}
+	)
+	snap.flags.erpcore_service = True
+	snap.insert(ignore_permissions=True)
+
+	file_doc = frappe.get_doc(
+		{
+			"doctype": "File",
+			"file_name": f"{close.name}-r{close.revision}-{frappe.scrub(report_name)}-{frappe.scrub(scope)}.{extension}",
+			"is_private": 1,
+			"content": content,
+			"attached_to_doctype": SNAPSHOT_DOCTYPE,
+			"attached_to_name": snap.name,
+		}
+	)
+	file_doc.insert(ignore_permissions=True)
+	frappe.db.set_value(SNAPSHOT_DOCTYPE, snap.name, "file", file_doc.file_url, update_modified=False)
+	return snap.name
+
+
+MANIFEST = "Close Manifest"
+PACKET = "Close Packet"
+
+
+def record_rows(doctype: str, filters: dict, order_by: str = "creation asc") -> list[dict]:
+	return [
+		{k: v for k, v in row.items() if not k.startswith("_")}
+		for row in frappe.get_all(doctype, filters=filters, fields=["*"], order_by=order_by)
+	]
+
+
+def check_run_record(run_name: str | None) -> dict | None:
+	if not run_name or not frappe.db.exists("Monthly Close Check Run", run_name):
+		return None
+	run = frappe.get_doc("Monthly Close Check Run", run_name).as_dict(no_default_fields=True)
+	run["name"] = run_name
+	run["results"] = [
+		{k: v for k, v in row.items() if k not in ("parent", "parentfield", "parenttype", "doctype")}
+		for row in run.get("results") or []
+	]
+	return run
+
+
+def build_manifest(close, snapshot_names: list[str]) -> dict:
+	"""Everything this revision was closed on, from the locked month, in one structure."""
+	import erpnext
+
+	from erpcore.erp_core.monthly_close import native_lock
+
+	revision = {"monthly_close": close.name, "revision": close.revision}
+	period = None
+	if close.accounting_period and frappe.db.exists("Accounting Period", close.accounting_period):
+		ap = frappe.get_doc("Accounting Period", close.accounting_period)
+		period = {
+			"name": ap.name,
+			"period_name": ap.period_name,
+			"start_date": ap.start_date,
+			"end_date": ap.end_date,
+			"disabled": ap.disabled,
+			"exempted_role": ap.exempted_role,
+			"owned": bool(close.lock_owned),
+			"closed_documents": sorted((row.document_type, cint(row.closed)) for row in ap.closed_documents),
+		}
+
+	currency = erpnext.get_company_currency(close.company)
+	record = close.as_dict(no_default_fields=True)
+	record["name"] = close.name
+	record.pop("dashboard_html", None)
+	return {
+		"manifest_version": 1,
+		"sealed_at": now_datetime(),
+		"close": record,
+		"policy": json.loads(close.policy_snapshot or "{}"),
+		"template": json.loads(close.template_snapshot or "{}"),
+		"currency": currency,
+		"precision": cint(frappe.get_precision("GL Entry", "debit", currency=currency)) or 2,
+		"approved_check_run": check_run_record(close.approved_check_run),
+		"final_check_run": check_run_record(close.closing_check_run),
+		"tasks": record_rows("Monthly Close Task", revision, "idx asc, creation asc"),
+		"exceptions": record_rows("Monthly Close Exception", revision),
+		"bank_certifications": record_rows("Monthly Close Bank Certification", revision),
+		"reopen_requests": record_rows("Monthly Close Reopen Request", {"monthly_close": close.name}),
+		"events": record_rows(
+			"Monthly Close Event", {"monthly_close": close.name}, "event_time asc, creation asc"
+		),
+		"lock": {"accounting_period": period, "health": native_lock.lock_health(close)},
+		"reports": [
+			frappe.db.get_value(
+				SNAPSHOT_DOCTYPE,
+				name,
+				[
+					"name",
+					"report_name",
+					"scope",
+					"from_date",
+					"to_date",
+					"filters_json",
+					"row_count",
+					"sha256",
+					"file",
+				],
+				as_dict=True,
+			)
+			for name in snapshot_names
+		],
+		"app_versions": app_versions(),
+	}
+
+
+def seal_revision_packet(close, snapshot_names: list[str]) -> dict:
+	"""Store the revision manifest and its readable packet. Returns their snapshot names."""
+	versions = app_versions()
+	manifest = build_manifest(close, snapshot_names)
+	manifest_bytes = payload_bytes(manifest)
+	manifest_name = store_snapshot(
+		close, MANIFEST, f"Revision {close.revision}", manifest_bytes, "json", versions
+	)
+
+	from frappe.utils.jinja import get_jenv
+
+	html = (
+		get_jenv()
+		.get_template("erpcore/templates/monthly_close/packet.html")
+		.render(m=frappe._dict(json.loads(manifest_bytes)), manifest_sha=sha256(manifest_bytes))
+	)
+	packet_name = store_snapshot(close, PACKET, f"Revision {close.revision}", html.encode(), "html", versions)
+	return {"manifest": manifest_name, "packet": packet_name}
+
+
+def revision_packet(close_name: str, revision: int) -> dict:
+	"""The sealed packet of one revision: file URLs and hashes, verified. Never regenerated."""
+	result = {}
+	for kind in (MANIFEST, PACKET):
+		name = frappe.db.get_value(
+			SNAPSHOT_DOCTYPE,
+			{"monthly_close": close_name, "revision": cint(revision), "report_name": kind},
+			"name",
+		)
+		if not name:
+			continue
+		row = frappe.db.get_value(SNAPSHOT_DOCTYPE, name, ["name", "file", "sha256", "status"], as_dict=True)
+		row["verified"] = verify(name)["ok"]
+		result[kind] = row
+	return result
 
 
 def verify(snapshot_name: str) -> dict:

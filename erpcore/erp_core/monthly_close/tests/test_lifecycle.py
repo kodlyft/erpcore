@@ -196,11 +196,40 @@ class TestLifecycle(MonthlyCloseTestCase):
 			lifecycle.submit_for_review(name)
 			self.assertRaises(frappe.PermissionError, lifecycle.approve, name)
 
-		frappe.db.set_value("Monthly Close Policy", TEST_COMPANY, "allow_self_approval", 1)
-		frappe.clear_document_cache("Monthly Close Policy", TEST_COMPANY)
+		# A policy change goes through the policy document, which bumps its version...
+		policy = frappe.get_doc("Monthly Close Policy", TEST_COMPANY)
+		policy.allow_self_approval = 1
+		policy.cutover_period = month(36)  # before any committed close on the site
+		policy.save(ignore_permissions=True)
+		# ...and makes the checks the close was submitted with stale.
 		with as_user(MANAGER):
+			self.assertRaises(frappe.ValidationError, lifecycle.approve, name)
+			lifecycle.reject(name, "Policy changed")
+		run_checks(name)
+		with as_user(MANAGER):
+			lifecycle.submit_for_review(name)
 			lifecycle.approve(name)
 		self.assertTrue(frappe.db.get_value("Monthly Close", name, "self_approval_used"))
+
+	def test_policy_edited_behind_the_api_is_detected(self):
+		"""A raw edit that keeps the version number still changes the frozen policy hash."""
+		name = new_close(3)
+		with as_user(PREPARER):
+			lifecycle.start_close(name)
+		complete_tasks(name)
+		run_checks(name)
+		frappe.db.set_value("Monthly Close Policy", TEST_COMPANY, "allow_self_approval", 1)
+		frappe.clear_document_cache("Monthly Close Policy", TEST_COMPANY)
+		with as_user(PREPARER):
+			self.assertRaisesRegex(frappe.ValidationError, "policy", lifecycle.submit_for_review, name)
+
+	def test_client_cannot_forge_policy_version(self):
+		policy = frappe.get_doc("Monthly Close Policy", TEST_COMPANY)
+		version = policy.policy_version
+		policy.policy_version = 999
+		policy.cutover_period = month(36)
+		policy.save(ignore_permissions=True)
+		self.assertEqual(frappe.db.get_value("Monthly Close Policy", TEST_COMPANY, "policy_version"), version)
 
 	def test_send_back_requires_reason(self):
 		name = drive_to_approved(3)
@@ -247,16 +276,16 @@ class TestLifecycle(MonthlyCloseTestCase):
 
 		from erpcore.erp_core.monthly_close.checks import registry
 
-		original = registry._REGISTRY["trial_balance"].function
+		original = registry.REGISTRY["trial_balance"].function
 
 		def broken(ctx):
 			raise RuntimeError("boom")
 
-		registry._REGISTRY["trial_balance"].function = broken
+		registry.REGISTRY["trial_balance"].function = broken
 		try:
 			run = frappe.get_doc("Monthly Close Check Run", run_checks(name))
 		finally:
-			registry._REGISTRY["trial_balance"].function = original
+			registry.REGISTRY["trial_balance"].function = original
 
 		row = next(r for r in run.results if r.check_id == "trial_balance")
 		self.assertEqual(row.status, "Error")

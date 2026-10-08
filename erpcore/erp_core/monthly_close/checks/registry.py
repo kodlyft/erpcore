@@ -12,6 +12,15 @@ A check function receives a `CheckContext` and returns a `Finding`. It reports
 what it saw; the runner turns a finding into Warning or Blocker from the policy.
 A check that cannot evaluate returns NOT_APPLICABLE (with a reason) or raises,
 which is recorded as Error. Neither is ever a Passed.
+
+`samples` are a bounded excerpt for people to read. `identities` are the
+complete set of rows the finding is about (voucher names, parties, accounts
+with amounts...), and the finding signature that a waiver binds to is computed
+from them. A finding that lists more rows than it identifies cannot be waived:
+otherwise a changed row outside the sample would inherit an old waiver.
+
+`waivable=False` marks integrity invariants (an unbalanced ledger, unfinished
+reposts). They must be fixed; an exception cannot approve them.
 """
 
 from collections.abc import Callable
@@ -52,6 +61,16 @@ class Finding:
 	route: str | None = None
 	minimum_severity: str | None = None  # e.g. an unbalanced trial balance is always a Blocker
 	tolerance_applies: bool = True  # False when the finding is missing evidence, not an amount
+	identities: list | None = None  # every row the finding covers; None means "the samples"
+	waivable: bool = True  # False for integrity invariants that must be fixed, not excepted
+
+	def complete_identities(self) -> list | None:
+		"""All rows behind the finding, or None when only a partial sample is known."""
+		if self.identities is not None:
+			return list(self.identities)
+		if len(self.samples or []) >= int(self.count or 0):
+			return list(self.samples or [])
+		return None
 
 
 @dataclass
@@ -65,8 +84,8 @@ class CheckDefinition:
 	uses_tolerance: bool = False
 
 
-_REGISTRY: dict[str, CheckDefinition] = {}
-_LOADED = False
+REGISTRY: dict[str, CheckDefinition] = {}
+LOADED = False
 
 
 def register_check(
@@ -78,7 +97,7 @@ def register_check(
 	uses_tolerance: bool = False,
 ):
 	def decorator(function):
-		_REGISTRY[check_id] = CheckDefinition(
+		REGISTRY[check_id] = CheckDefinition(
 			check_id=check_id,
 			version=version,
 			label=label,
@@ -92,9 +111,9 @@ def register_check(
 	return decorator
 
 
-def _load():
-	global _LOADED
-	if _LOADED:
+def load_checks():
+	global LOADED
+	if LOADED:
 		return
 
 	from erpcore.erp_core.monthly_close.checks import assets, ledger, stock, subledgers
@@ -102,12 +121,12 @@ def _load():
 	for module in frappe.get_hooks("erpcore_monthly_close_checks"):
 		frappe.get_module(module)
 
-	_LOADED = True
+	LOADED = True
 
 
 def get_checks() -> dict[str, CheckDefinition]:
-	_load()
-	return dict(_REGISTRY)
+	load_checks()
+	return dict(REGISTRY)
 
 
 def get_check(check_id: str) -> CheckDefinition | None:

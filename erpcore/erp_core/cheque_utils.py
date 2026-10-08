@@ -21,16 +21,16 @@ def get_cheque_settings():
 	return frappe.get_cached_doc("Cheque Settings")
 
 
-def _voucher_fields(doctype):
+def voucher_fields(doctype):
 	"""Cheque number/date fieldnames for a voucher doctype, or None if unsupported."""
 	return VOUCHER_FIELDS.get(doctype)
 
 
 def voucher_validate(doc, method=None):
-	if not _voucher_fields(doc.doctype):
+	if not voucher_fields(doc.doctype):
 		return
 
-	_release_previous_leaf(doc)
+	release_previous_leaf(doc)
 
 	if not doc.get("cheque_leaf"):
 		return
@@ -42,7 +42,7 @@ def voucher_validate(doc, method=None):
 		reserve_leaf(doc, leaf)
 
 
-def _release_previous_leaf(doc):
+def release_previous_leaf(doc):
 	"""If this save changed or cleared ``cheque_leaf``, free the leaf it pointed at."""
 	if doc.is_new():
 		return
@@ -127,7 +127,7 @@ def validate_cheque_leaf(doc):
 
 def apply_leaf_to_voucher(doc, leaf):
 	"""Write the leaf's number and date into the voucher's own reference fields."""
-	fields = _voucher_fields(doc.doctype)
+	fields = voucher_fields(doc.doctype)
 	doc.set(fields["number"], leaf.cheque_no)
 	if not doc.get(fields["date"]):
 		doc.set(fields["date"], leaf.cheque_date or doc.get("posting_date") or nowdate())
@@ -190,7 +190,7 @@ def release_leaf(leaf_name, doc=None):
 
 def release_reservation(doc, method=None):
 	"""``on_trash`` handler: a deleted draft must not hold a leaf hostage."""
-	if _voucher_fields(doc.doctype) and doc.get("cheque_leaf"):
+	if voucher_fields(doc.doctype) and doc.get("cheque_leaf"):
 		release_leaf(doc.cheque_leaf, doc)
 
 
@@ -198,7 +198,7 @@ def voucher_on_submit(doc, method=None):
 	"""Consume the leaf. Takes a row lock so a concurrent submit blocks here
 	rather than racing to the unique index.
 	"""
-	if not _voucher_fields(doc.doctype) or not doc.get("cheque_leaf"):
+	if not voucher_fields(doc.doctype) or not doc.get("cheque_leaf"):
 		return
 
 	status = frappe.db.get_value("Cheque Leaf", doc.cheque_leaf, "status", for_update=True)
@@ -215,7 +215,7 @@ def voucher_on_submit(doc, method=None):
 				title=_("Cheque Already Used"),
 			)
 
-	fields = _voucher_fields(doc.doctype)
+	fields = voucher_fields(doc.doctype)
 	frappe.db.set_value(
 		"Cheque Leaf",
 		doc.cheque_leaf,
@@ -228,28 +228,28 @@ def voucher_on_submit(doc, method=None):
 			"party_type": doc.get("party_type"),
 			"party": doc.get("party"),
 			"payee_name": doc.get("party_name") or doc.get("party"),
-			"amount": _voucher_amount(doc),
-			"currency": _voucher_currency(doc),
+			"amount": voucher_amount(doc),
+			"currency": voucher_currency(doc),
 			"clearance_date": doc.get("clearance_date"),
 		},
 		update_modified=False,
 	)
 
 
-def _voucher_amount(doc):
+def voucher_amount(doc):
 	if doc.doctype == "Payment Entry":
 		return doc.get("paid_amount")
 	return doc.get("total_debit") or doc.get("total_credit")
 
 
-def _voucher_currency(doc):
+def voucher_currency(doc):
 	if doc.doctype == "Payment Entry":
 		return doc.get("paid_from_account_currency") or doc.get("paid_to_account_currency")
 	return frappe.get_cached_value("Company", doc.company, "default_currency") if doc.get("company") else None
 
 
 def voucher_on_cancel(doc, method=None):
-	if not _voucher_fields(doc.doctype) or not doc.get("cheque_leaf"):
+	if not voucher_fields(doc.doctype) or not doc.get("cheque_leaf"):
 		return
 
 	settings = get_cheque_settings()
@@ -277,7 +277,7 @@ def voucher_on_cancel(doc, method=None):
 		doc.cheque_leaf,
 		{
 			"status": LEAF_VOID,
-			"void_reason": _cancelled_voucher_reason(),
+			"void_reason": cancelled_voucher_reason(),
 			"void_date": nowdate(),
 			"voided_by": frappe.session.user,
 			"void_remarks": _("{0} {1} was cancelled.").format(doc.doctype, doc.name),
@@ -286,7 +286,7 @@ def voucher_on_cancel(doc, method=None):
 	)
 
 
-def _cancelled_voucher_reason():
+def cancelled_voucher_reason():
 	"""The seeded reason, or None if an administrator deleted it."""
 	if frappe.db.exists("Cheque Void Reason", VOID_REASON_CANCELLED_VOUCHER):
 		return VOID_REASON_CANCELLED_VOUCHER

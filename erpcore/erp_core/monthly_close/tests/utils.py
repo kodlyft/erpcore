@@ -22,7 +22,7 @@ from erpcore.erp_core.monthly_close.constants import (
 	ROLE_PREPARER,
 	ROLE_REVIEWER,
 )
-from erpcore.tests.utils import OTHER_COMPANY, TEST_COMPANY, ERPCoreTestCase, _make_user
+from erpcore.tests.utils import OTHER_COMPANY, TEST_COMPANY, ERPCoreTestCase, make_user
 
 PREPARER = "_test_close_preparer@example.com"
 REVIEWER = "_test_close_reviewer@example.com"
@@ -39,6 +39,7 @@ TEST_CHECKS = {
 	"draft_vouchers": "Blocker",
 	"trial_balance": "Blocker",
 	"bank_reconciliation": "Warning",
+	"ar_ap_ledger_integrity": "Warning",
 	"ar_ap_review": "Warning",
 	"stock_accounting": "Warning",
 	"depreciation_due": "Warning",
@@ -67,7 +68,7 @@ def setup_monthly_close_fixtures():
 		(AUDITOR, [ROLE_AUDITOR]),
 		(OTHER_COMPANY_USER, [ROLE_PREPARER, ROLE_REVIEWER, ROLE_MANAGER, ROLE_AUDITOR]),
 	):
-		_make_user(user, "_Test", user.split("@")[0], roles=roles)
+		make_user(user, "_Test", user.split("@")[0], roles=roles)
 
 	if not frappe.db.exists(
 		"User Permission", {"user": OTHER_COMPANY_USER, "allow": "Company", "for_value": OTHER_COMPANY}
@@ -146,11 +147,17 @@ def as_user(user: str):
 		frappe.set_user(previous)  # nosemgrep
 
 
-def private_file(name: str = "evidence.txt", content: bytes = b"evidence") -> str:
-	doc = frappe.get_doc({"doctype": "File", "file_name": name, "is_private": 1, "content": content}).insert(
-		ignore_permissions=True
-	)
-	return doc.file_url
+def private_file(
+	name: str = "evidence.txt",
+	content: bytes = b"evidence",
+	attached_to: tuple[str, str] | None = None,
+	is_private: int = 1,
+) -> str:
+	"""Upload a file the way the form does: attached to the record it evidences."""
+	values = {"doctype": "File", "file_name": name, "is_private": is_private, "content": content}
+	if attached_to:
+		values.update({"attached_to_doctype": attached_to[0], "attached_to_name": attached_to[1]})
+	return frappe.get_doc(values).insert(ignore_permissions=True).file_url
 
 
 def complete_tasks(close_name: str):
@@ -169,7 +176,9 @@ def complete_tasks(close_name: str):
 			else:
 				task.status = "Done"
 				if row.evidence_required:
-					task.evidence = private_file()
+					task.evidence = private_file(
+						f"evidence-{row.name}.txt", row.name.encode(), ("Monthly Close Task", row.name)
+					)
 			task.save()
 
 
@@ -224,15 +233,19 @@ def reopen_close(name: str, reason: str = "Late supplier invoice"):
 
 
 def make_je(posting_date, amount: float = 100, submit: bool = True, company: str = TEST_COMPANY):
+	"""Bank-to-cash journal in the given company, with that company's own accounts and cost center."""
 	from erpnext.accounts.doctype.journal_entry.test_journal_entry import make_journal_entry
 
+	abbr = frappe.get_cached_value("Company", company, "abbr")
 	return make_journal_entry(
-		"_Test Bank - _TC",
-		"_Test Cash - _TC",
+		f"_Test Bank - {abbr}",
+		f"_Test Cash - {abbr}",
 		amount,
+		cost_center=frappe.get_cached_value("Company", company, "cost_center"),
 		posting_date=posting_date,
 		save=True,
 		submit=submit,
+		company=company,
 	)
 
 

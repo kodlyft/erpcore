@@ -27,6 +27,7 @@
   "work_section",
   "notes",
   "evidence",
+  "evidence_hash",
   "column_break_work",
   "completed_by",
   "completed_at"
@@ -90,7 +91,9 @@
    "fieldname": "assigned_role",
    "fieldtype": "Link",
    "label": "Assigned Role",
-   "options": "Role"
+   "options": "Role",
+   "read_only": 1,
+   "description": "From the checklist template. Only holders of this role (or a Close Manager) can work on the task."
   },
   {
    "fieldname": "due_date",
@@ -171,6 +174,13 @@
    "label": "Evidence"
   },
   {
+   "fieldname": "evidence_hash",
+   "fieldtype": "Data",
+   "label": "Evidence SHA-256",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
    "fieldname": "column_break_work",
    "fieldtype": "Column Break"
   },
@@ -189,7 +199,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-07 10:00:00",
+ "modified": "2026-10-08 10:00:00",
  "modified_by": "Administrator",
  "module": "ERP Core",
  "name": "Monthly Close Task",
@@ -228,7 +238,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Close Reviewer"
+   "role": "Close Reviewer",
+   "write": 1
   },
   {
    "export": 1,

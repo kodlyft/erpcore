@@ -5,7 +5,7 @@
 
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 from erpcore.erp_core.cheque_constants import (
 	LEAF_BOUNCED,
@@ -29,7 +29,7 @@ from erpcore.erp_core.monthly_close.checks.registry import (
 from erpcore.erp_core.monthly_close.constants import BANK_CERT_DOCTYPE
 
 
-def _run_native_report(module_path: str, filters: dict):
+def run_native_report(module_path: str, filters: dict):
 	"""Run an installed ERPNext report's `execute` so its accounting semantics are reused, not copied."""
 	execute = frappe.get_attr(f"{module_path}.execute")
 	result = execute(frappe._dict(filters))
@@ -37,41 +37,50 @@ def _run_native_report(module_path: str, filters: dict):
 
 
 @register_check(
-	"ar_ap_review",
+	"ar_ap_ledger_integrity",
 	version=1,
-	label="Receivables and payables review",
-	default_severity=WARNING,
-	description="Ageing, unallocated advances and voucher-level differences between the General Ledger and Payment Ledger on receivable/payable accounts. Unpaid invoices are normal and are review items, not errors.",
+	label="Receivable/payable ledger integrity",
+	default_severity=BLOCKER,
+	description="Vouchers of the month whose General Ledger and Payment Ledger disagree on receivable/payable accounts (ERPNext's General and Payment Ledger Comparison). This is a ledger-integrity failure, unlike ordinary unpaid balances.",
 )
-def ar_ap_review(ctx: CheckContext) -> Finding:
-	samples, notes, count, amount = [], [], 0, 0.0
-
-	_columns, mismatches = _run_native_report(
+def ar_ap_ledger_integrity(ctx: CheckContext) -> Finding:
+	mismatches = run_native_report(
 		"erpnext.accounts.report.general_and_payment_ledger_comparison.general_and_payment_ledger_comparison",
 		{"company": ctx.company, "period_start_date": ctx.period_start, "period_end_date": ctx.period_end},
+	)[1]
+	if not mismatches:
+		return Finding(PASSED, _("General Ledger and Payment Ledger agree for every voucher of the month."))
+
+	rows = [dict(row) for row in mismatches]
+	return Finding(
+		FINDING,
+		_("{0} vouchers differ between General Ledger and Payment Ledger.").format(len(rows)),
+		count=len(rows),
+		amount=flt(
+			sum(abs(flt(r.get("gl_balance")) - flt(r.get("pl_balance"))) for r in rows), ctx.precision
+		),
+		samples=bounded(rows, ctx.sample_limit),
+		identities=rows,
+		route="query-report/General and Payment Ledger Comparison",
 	)
-	if mismatches:
-		count += len(mismatches)
-		notes.append(
-			_("{0} vouchers differ between General Ledger and Payment Ledger.").format(len(mismatches))
-		)
-		samples += [{"type": "GL/PL difference", **dict(row)} for row in mismatches[: ctx.sample_limit]]
+
+
+@register_check(
+	"ar_ap_review",
+	version=2,
+	label="Receivables and payables review",
+	default_severity=WARNING,
+	description="Ageing over 120 days and unallocated advances at month end, from ERPNext's receivable/payable summaries with month-end filters. Unpaid invoices are normal and are review items, not errors. Ledger mismatches are a separate check.",
+)
+def ar_ap_review(ctx: CheckContext) -> Finding:
+	identities, notes, amount = [], [], 0.0
 
 	summaries = (
 		("Receivable", "erpnext.accounts.report.accounts_receivable_summary.accounts_receivable_summary"),
 		("Payable", "erpnext.accounts.report.accounts_payable_summary.accounts_payable_summary"),
 	)
 	for account_type, module_path in summaries:
-		_columns, rows = _run_native_report(
-			module_path,
-			{
-				"company": ctx.company,
-				"report_date": ctx.period_end,
-				"ageing_based_on": "Due Date",
-				"age_as_on": "Report Date",
-				"range": "30, 60, 90, 120",
-			},
-		)
+		rows = run_native_report(module_path, ageing_filters(ctx))[1]
 		rows = [frappe._dict(row) for row in rows if isinstance(row, dict) and row.get("party")]
 		outstanding = sum(flt(row.outstanding) for row in rows)
 		oldest = [row for row in rows if flt(row.get("range5"))]
@@ -90,34 +99,46 @@ def ar_ap_review(ctx: CheckContext) -> Finding:
 				len(advances),
 			)
 		)
-		if oldest or advances:
-			count += len(oldest) + len(advances)
-			amount += sum(flt(row.get("range5")) for row in oldest)
-			for row in sorted(oldest, key=lambda r: -flt(r.get("range5")))[: ctx.sample_limit]:
-				samples.append(
-					{
-						"type": f"{account_type} over 120 days",
-						"party": row.party,
-						"amount": flt(row.get("range5")),
-					}
-				)
-			for row in advances[: ctx.sample_limit]:
-				samples.append(
-					{
-						"type": f"{account_type} unallocated advance",
-						"party": row.party,
-						"amount": flt(row.advance),
-					}
-				)
+		amount += sum(flt(row.get("range5")) for row in oldest)
+		for row in sorted(oldest, key=lambda r: -flt(r.get("range5"))):
+			identities.append(
+				{
+					"type": f"{account_type} over 120 days",
+					"party_type": row.get("party_type"),
+					"party": row.party,
+					"amount": flt(row.get("range5"), ctx.precision),
+				}
+			)
+		for row in advances:
+			identities.append(
+				{
+					"type": f"{account_type} unallocated advance",
+					"party_type": row.get("party_type"),
+					"party": row.party,
+					"amount": flt(row.advance, ctx.precision),
+				}
+			)
 
 	return Finding(
-		FINDING if count else PASSED,
+		FINDING if identities else PASSED,
 		" ".join(notes),
-		count=count,
+		count=len(identities),
 		amount=flt(amount, ctx.precision),
-		samples=bounded(samples, ctx.sample_limit),
+		samples=bounded(identities, ctx.sample_limit),
+		identities=identities,
 		route="query-report/Accounts Receivable Summary",
 	)
+
+
+def ageing_filters(ctx) -> dict:
+	"""The month-end filters used by the AR/AP check, the fingerprint and the packet snapshots."""
+	return {
+		"company": ctx.company,
+		"report_date": ctx.period_end,
+		"ageing_based_on": "Due Date",
+		"age_as_on": "Report Date",
+		"range": "30, 60, 90, 120",
+	}
 
 
 def company_bank_accounts(company: str) -> list[frappe._dict]:
@@ -131,14 +152,19 @@ def company_bank_accounts(company: str) -> list[frappe._dict]:
 
 @register_check(
 	"bank_reconciliation",
-	version=1,
+	version=2,
 	label="Bank reconciliation certification",
 	default_severity=BLOCKER,
-	description="Each company bank account needs a certified workpaper for this revision: ledger balance, statement balance and date with the statement attached, outstanding items and an explained difference. Outstanding cheques are normal; missing evidence is not.",
+	description="Each company bank account needs a certified workpaper for this revision: statement dated at month end (or bridged with an explanation), the statement file intact, ledger balance unchanged since certification, and any difference explained. Amounts are compared in each bank account's own currency; the policy tolerance applies to company-currency accounts only. Outstanding cheques are normal; missing evidence is not.",
 	uses_tolerance=True,
 )
 def bank_reconciliation(ctx: CheckContext) -> Finding:
 	from erpnext.accounts.utils import get_balance_on
+
+	from erpcore.erp_core.doctype.monthly_close_bank_certification.monthly_close_bank_certification import (
+		certified_content_hash,
+	)
+	from erpcore.erp_core.monthly_close import evidence
 
 	accounts = company_bank_accounts(ctx.company)
 	if not accounts:
@@ -146,51 +172,66 @@ def bank_reconciliation(ctx: CheckContext) -> Finding:
 			NOT_APPLICABLE, _("The company has no enabled company bank accounts linked to a GL account.")
 		)
 
-	certifications = {
-		row.bank_account: row
-		for row in frappe.get_all(
-			BANK_CERT_DOCTYPE,
-			filters={"monthly_close": ctx.close_name, "revision": ctx.revision},
-			fields=[
-				"name",
-				"bank_account",
-				"status",
-				"ledger_balance",
-				"unexplained_difference",
-				"statement_file",
-			],
-		)
-	}
+	certifications = {}
+	for name in frappe.get_all(
+		BANK_CERT_DOCTYPE,
+		filters={"monthly_close": ctx.close_name, "revision": ctx.revision},
+		pluck="name",
+	):
+		cert = frappe.get_doc(BANK_CERT_DOCTYPE, name)
+		certifications[cert.bank_account] = cert
 
-	problems, unexplained = [], 0.0
+	problems, unexplained_company_currency = [], 0.0
 	for account in accounts:
 		cert = certifications.get(account.name)
 		if not cert or cert.status != "Certified":
-			problems.append({"bank_account": account.name, "problem": _("Not certified")})
+			problems.append({"bank_account": account.name, "problem": "Not certified"})
 			continue
 
-		if not cert.statement_file:
-			problems.append({"bank_account": account.name, "problem": _("Statement evidence missing")})
+		currency = cert.account_currency or ctx.currency
+		precision = cint(cert.precision("ledger_balance")) or ctx.precision
+		if cert.certified_hash != certified_content_hash(cert):
+			problems.append(
+				{"bank_account": account.name, "problem": "Workpaper changed after certification"}
+			)
 
-		ledger_now = flt(get_balance_on(account.account, ctx.period_end, company=ctx.company), ctx.precision)
-		if flt(cert.ledger_balance, ctx.precision) != ledger_now:
+		broken = evidence.verify(cert.statement_file, cert.statement_hash)
+		if broken:
+			problems.append({"bank_account": account.name, "problem": f"Statement: {broken}"})
+
+		if cert.needs_bridging() and not (cert.bridging_note or "").strip():
+			problems.append(
+				{"bank_account": account.name, "problem": "Statement not at month end, no bridging"}
+			)
+
+		ledger_now = flt(
+			get_balance_on(account.account, ctx.period_end, company=ctx.company, in_account_currency=True),
+			precision,
+		)
+		if flt(cert.ledger_balance, precision) != ledger_now:
 			problems.append(
 				{
 					"bank_account": account.name,
-					"problem": _("Ledger changed after certification"),
-					"certified": cert.ledger_balance,
+					"problem": "Ledger changed after certification",
+					"currency": currency,
+					"certified": flt(cert.ledger_balance, precision),
 					"ledger_now": ledger_now,
 				}
 			)
 
-		if flt(cert.unexplained_difference, ctx.precision):
-			unexplained += abs(flt(cert.unexplained_difference))
-			if abs(flt(cert.unexplained_difference)) > abs(flt(ctx.tolerance)):
+		difference = flt(cert.unexplained_difference, precision)
+		if difference:
+			same_currency = currency == ctx.currency
+			if same_currency:
+				unexplained_company_currency += abs(difference)
+			# A company-currency tolerance says nothing about another currency.
+			if not same_currency or abs(difference) > abs(flt(ctx.tolerance)):
 				problems.append(
 					{
 						"bank_account": account.name,
-						"problem": _("Unexplained difference"),
-						"amount": cert.unexplained_difference,
+						"problem": "Unexplained difference",
+						"currency": currency,
+						"amount": difference,
 					}
 				)
 
@@ -205,11 +246,12 @@ def bank_reconciliation(ctx: CheckContext) -> Finding:
 			len({p["bank_account"] for p in problems}), len(accounts)
 		),
 		count=len(problems),
-		amount=flt(unexplained, ctx.precision),
+		amount=flt(unexplained_company_currency, ctx.precision),
 		samples=bounded(problems, ctx.sample_limit),
+		identities=problems,
 		route="monthly-close-bank-certification",
-		# Missing or stale evidence is never inside a monetary tolerance; the policy still sets severity.
-		tolerance_applies=all(p["problem"] == _("Unexplained difference") for p in problems),
+		# Tolerance was applied per account above, in the account's own currency.
+		tolerance_applies=False,
 	)
 
 
@@ -317,5 +359,6 @@ def cheque_readiness(ctx: CheckContext) -> Finding:
 		" ".join(notes),
 		count=findings,
 		samples=bounded(samples, ctx.sample_limit),
+		identities=samples,
 		route="cheque-leaf",
 	)

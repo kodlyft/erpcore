@@ -22,11 +22,13 @@ class MonthlyCloseException(Document):
 		check_label: DF.Data | None
 		check_result: DF.Data | None
 		check_run: DF.Link | None
+		check_version: DF.Int
 		company: DF.Link | None
 		decided_at: DF.Datetime | None
 		decided_by: DF.Link | None
 		decision_note: DF.SmallText | None
 		evidence: DF.Attach | None
+		evidence_hash: DF.Data | None
 		expires_on: DF.Date | None
 		explanation: DF.SmallText | None
 		finding_message: DF.SmallText | None

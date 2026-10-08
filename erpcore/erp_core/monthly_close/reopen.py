@@ -136,10 +136,10 @@ def decide_reopen(request_name: str, approve_it: bool, note: str | None = None) 
 
 
 def reopen(close, request, self_approved: bool) -> None:
-	later = _lock_later_closes(close)
+	later = lock_later_closes(close)
 
 	released = native_lock.release(close)
-	superseded = _supersede_revision_artifacts(close)
+	superseded = supersede_revision_artifacts(close)
 
 	previous_revision = close.revision
 	set_state(
@@ -175,7 +175,7 @@ def reopen(close, request, self_approved: bool) -> None:
 	)
 
 	for later_close in later:
-		_invalidate_later(later_close, close)
+		invalidate_later_close(later_close, close)
 
 	subject, message = transition_message(close, "Reopened", request.reason)
 	notify_after_commit(
@@ -183,7 +183,7 @@ def reopen(close, request, self_approved: bool) -> None:
 	)
 
 
-def _lock_later_closes(close) -> list:
+def lock_later_closes(close) -> list:
 	names = frappe.get_all(
 		CLOSE_DOCTYPE,
 		filters={"company": close.company, "period_start": [">", close.period_start]},
@@ -197,7 +197,7 @@ def _lock_later_closes(close) -> list:
 	return locked
 
 
-def _invalidate_later(later_close, reopened) -> None:
+def invalidate_later_close(later_close, reopened) -> None:
 	reason = _("Earlier month {0} was reopened; its balances carry into this month.").format(reopened.name)
 	if later_close.state in (READY_FOR_REVIEW, APPROVED):
 		invalidate_approval(later_close, "Invalidated by Earlier Reopen", reason)
@@ -207,7 +207,7 @@ def _invalidate_later(later_close, reopened) -> None:
 		log_event(later_close, "Revalidation Required", details={"reason": reason, "reopened": reopened.name})
 
 
-def _supersede_revision_artifacts(close) -> list[str]:
+def supersede_revision_artifacts(close) -> list[str]:
 	snapshots = frappe.get_all(
 		SNAPSHOT_DOCTYPE,
 		filters={"monthly_close": close.name, "revision": close.revision, "status": SNAPSHOT_ORIGINAL},

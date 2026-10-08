@@ -207,6 +207,20 @@ expense accounts, revalue currencies, run depreciation or touch the company free
   creates a policy, so no historical month is managed or locked automatically.
 * Workspace: **Monthly Closing**. Reports: Status, Outstanding Tasks, Exceptions, Lock
   Integrity, Audit Trail, Posting Coverage.
+* Each closed revision seals a manifest (policy, checks, tasks with evidence hashes,
+  exceptions, bank workpapers, actors, lock details, report hashes, app commits) and a
+  readable HTML packet rendered from it. Reopening never overwrites them.
+
+Full guides live in [`docs/monthly-closing/`](docs/monthly-closing/README.md):
+[configuration and cutover](docs/monthly-closing/configuration.md) ·
+[roles and data scope](docs/monthly-closing/roles-and-data-scope.md) ·
+[tasks, evidence and bank workpapers](docs/monthly-closing/evidence.md) ·
+[posting coverage](docs/monthly-closing/posting-coverage.md) ·
+[close, reopen and revalidation](docs/monthly-closing/close-reopen-revalidation.md) ·
+[job recovery](docs/monthly-closing/job-recovery.md) ·
+[packets](docs/monthly-closing/packets.md) ·
+[extending checks and vouchers](docs/monthly-closing/extending.md) ·
+[migration and uninstall](docs/monthly-closing/migration-and-uninstall.md).
 
 ---
 
@@ -227,9 +241,12 @@ Install with the [bench](https://github.com/frappe/bench) CLI:
 
 ```bash
 cd $PATH_TO_YOUR_BENCH
-bench get-app https://github.com/kodlyft/erpcore --branch develop
+bench get-app https://github.com/kodlyft/erpcore --branch version-16
 bench --site your-site.com install-app erpcore
 ```
+
+`version-16` is the release branch (tagged by `release.yml`). `develop` is where work
+lands first and is what CI tests on every push; use it only for development.
 
 Installation seeds the default void reason codes and creates the database indexes. Both
 steps are idempotent and re-run on every `bench migrate`, so a site installed before a
@@ -281,7 +298,7 @@ This repository ships a full CI/CD suite via GitHub Actions:
 | [`ci.yml`](.github/workflows/ci.yml) | push to `develop`, PRs | Installs ERPNext + this app on a fresh bench and runs unit tests |
 | [`linter.yml`](.github/workflows/linter.yml) | PRs | Pre-commit, Frappe semgrep rules, and `pip-audit` dependency scan |
 | [`semantic-commits.yml`](.github/workflows/semantic-commits.yml) | PRs | Validates commit titles against Conventional Commits |
-| [`release.yml`](.github/workflows/release.yml) | push to `develop` | Automated semantic versioning + GitHub releases |
+| [`release.yml`](.github/workflows/release.yml) | push to `version-16` | Automated semantic versioning + GitHub releases |
 
 [Dependabot](.github/dependabot.yml) keeps GitHub Actions and Python dependencies up to date weekly.
 

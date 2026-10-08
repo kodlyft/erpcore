@@ -27,19 +27,19 @@ def setup_gate_pass_workflow():
 	enabled = frappe.db.get_single_value("Gate Pass Settings", "enable_approval_workflow")
 
 	if not enabled:
-		_disable_workflow()
+		disable_workflow()
 		return
 
-	_ensure_masters()
-	_upsert_workflow()
+	ensure_masters()
+	upsert_workflow()
 
 
-def _disable_workflow():
+def disable_workflow():
 	if frappe.db.exists("Workflow", WORKFLOW_NAME):
 		frappe.db.set_value("Workflow", WORKFLOW_NAME, "is_active", 0)
 
 
-def _ensure_masters():
+def ensure_masters():
 	for state, style in WORKFLOW_STATES.items():
 		if not frappe.db.exists("Workflow State", state):
 			frappe.get_doc(
@@ -53,7 +53,7 @@ def _ensure_masters():
 			)
 
 
-def _states():
+def workflow_states():
 	rows = [
 		("Draft", "0", SUBMITTER_ROLE, "Draft"),
 		("Pending Approval", "0", APPROVER_ROLE, "Pending Approval"),
@@ -73,7 +73,7 @@ def _states():
 	]
 
 
-def _transitions():
+def workflow_transitions():
 	return [
 		{
 			"state": "Draft",
@@ -102,7 +102,7 @@ def _transitions():
 	]
 
 
-def _upsert_workflow():
+def upsert_workflow():
 	if frappe.db.exists("Workflow", WORKFLOW_NAME):
 		workflow = frappe.get_doc("Workflow", WORKFLOW_NAME)
 		workflow.states = []
@@ -117,10 +117,10 @@ def _upsert_workflow():
 	workflow.send_email_alert = 0
 	workflow.override_status = 0
 
-	for state in _states():
+	for state in workflow_states():
 		workflow.append("states", state)
 
-	for transition in _transitions():
+	for transition in workflow_transitions():
 		workflow.append("transitions", transition)
 
 	workflow.save(ignore_permissions=True)

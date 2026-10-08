@@ -23,19 +23,23 @@ class MonthlyCloseCheckRun(Document):
 
 		attempts: DF.Int
 		blockers: DF.Int
+		claim_token: DF.Data | None
 		company: DF.Link | None
 		error: DF.SmallText | None
 		errors: DF.Int
-		finished_at: DF.Datetime | None
 		fingerprint: DF.Data | None
 		fingerprint_components: DF.Code | None
+		finished_at: DF.Datetime | None
 		job_id: DF.Data | None
+		lease_expires_at: DF.Datetime | None
 		monthly_close: DF.Link | None
+		policy_hash: DF.Data | None
 		policy_version: DF.Int
-		purpose: DF.Literal["Background", "Final"]
+		purpose: DF.Literal["Background", "Final", "Revalidation"]
 		requested_by: DF.Link | None
 		results: DF.Table[MonthlyCloseCheckResult]
 		revision: DF.Int
+		snapshot_at: DF.Datetime | None
 		started_at: DF.Datetime | None
 		status: DF.Literal["Queued", "Running", "Completed", "Failed", "Stale"]
 		warnings: DF.Int

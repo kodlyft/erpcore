@@ -133,16 +133,16 @@ class IntegrationTestChequeLeaf(ERPCoreTestCase):
 			leaf = frappe.get_doc("Cheque Leaf", self.leaf.name)
 			self.assertRaises(frappe.PermissionError, leaf.void_leaf, reason=VOID_REASON)
 
-	def _available(self, **filters):
+	def available_leaves(self, **filters):
 		rows = get_available_leaves("Cheque Leaf", "", "name", 0, 20, filters)
 		return [row[0] for row in rows]
 
 	def test_available_leaves_lists_unused_leaves_of_active_books(self):
-		self.assertIn(self.leaf.name, self._available(company=TEST_COMPANY))
+		self.assertIn(self.leaf.name, self.available_leaves(company=TEST_COMPANY))
 
 	def test_available_leaves_hides_consumed_leaves(self):
 		self.leaf.db_set("status", LEAF_ISSUED)
-		self.assertNotIn(self.leaf.name, self._available(company=TEST_COMPANY))
+		self.assertNotIn(self.leaf.name, self.available_leaves(company=TEST_COMPANY))
 
 	def test_available_leaves_includes_the_voucher_own_reservation(self):
 		self.leaf.db_set(
@@ -153,9 +153,9 @@ class IntegrationTestChequeLeaf(ERPCoreTestCase):
 			}
 		)
 
-		self.assertNotIn(self.leaf.name, self._available(company=TEST_COMPANY))
-		self.assertIn(self.leaf.name, self._available(company=TEST_COMPANY, voucher_name="_Test PE"))
+		self.assertNotIn(self.leaf.name, self.available_leaves(company=TEST_COMPANY))
+		self.assertIn(self.leaf.name, self.available_leaves(company=TEST_COMPANY, voucher_name="_Test PE"))
 
 	def test_available_leaves_respects_the_bank_account_filter(self):
-		self.assertIn(self.leaf.name, self._available(bank_account=TEST_BANK_ACCOUNT))
-		self.assertNotIn(self.leaf.name, self._available(bank_account=OTHER_BANK_ACCOUNT))
+		self.assertIn(self.leaf.name, self.available_leaves(bank_account=TEST_BANK_ACCOUNT))
+		self.assertNotIn(self.leaf.name, self.available_leaves(bank_account=OTHER_BANK_ACCOUNT))

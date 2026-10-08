@@ -44,7 +44,6 @@ class MonthlyClose(Document):
 		closing_check_run: DF.Link | None
 		closing_fingerprint: DF.Data | None
 		company: DF.Link
-		dashboard_html: DF.HTML | None
 		due_date: DF.Date | None
 		external_accounting_period: DF.Link | None
 		fiscal_year: DF.Link | None
@@ -55,17 +54,25 @@ class MonthlyClose(Document):
 		month: DF.Data | None
 		notes: DF.TextEditor | None
 		pending_action: DF.Data | None
+		pending_attempt: DF.Int
+		pending_job_id: DF.Data | None
+		pending_requested_at: DF.Datetime | None
 		pending_requested_by: DF.Link | None
+		pending_started_at: DF.Datetime | None
 		pending_token: DF.Data | None
 		period_end: DF.Date | None
 		period_start: DF.Date
 		policy: DF.Link | None
+		policy_hash: DF.Data | None
+		policy_snapshot: DF.Code | None
 		policy_version: DF.Int
 		preparer: DF.Link | None
 		rejection_reason: DF.SmallText | None
 		reopen_count: DF.Int
 		reopened_at: DF.Datetime | None
 		reopened_by: DF.Link | None
+		revalidated_at: DF.Datetime | None
+		revalidated_by: DF.Link | None
 		revalidation_required: DF.Check
 		reviewer: DF.Link | None
 		revision: DF.Int
@@ -82,7 +89,7 @@ class MonthlyClose(Document):
 	# end: auto-generated types
 
 	def autoname(self):
-		start, _end = month_bounds(self.period_start)
+		start = month_bounds(self.period_start)[0]
 		abbr = frappe.get_cached_value("Company", self.company, "abbr")
 		self.name = f"MC-{abbr}-{month_label(start)}"
 

@@ -25,10 +25,10 @@ def reconcile_cheque_leaf_status():
 		return
 
 	for voucher_doctype in VOUCHER_DOCTYPES:
-		_reconcile_against(voucher_doctype)
+		reconcile_against(voucher_doctype)
 
 
-def _reconcile_against(voucher_doctype):
+def reconcile_against(voucher_doctype):
 	"""
 	Find leaves whose status or clearance date disagrees with their voucher.
 
@@ -143,7 +143,7 @@ def notify_overdue_gate_pass_returns():
 	if not overdue:
 		return
 
-	recipients = _users_with_roles([row.role for row in settings.notify_roles])
+	recipients = users_with_roles([row.role for row in settings.notify_roles])
 	if not recipients:
 		return
 
@@ -151,12 +151,12 @@ def notify_overdue_gate_pass_returns():
 		recipients=recipients,
 		subject=frappe._("{0} gate passes have material overdue for return").format(len(overdue)),
 		template=None,
-		message=_overdue_digest_html(overdue),
+		message=overdue_digest_html(overdue),
 		reference_doctype="Gate Pass",
 	)
 
 
-def _users_with_roles(roles):
+def users_with_roles(roles):
 	if not roles:
 		return []
 
@@ -168,7 +168,7 @@ def _users_with_roles(roles):
 	)
 
 
-def _overdue_digest_html(rows):
+def overdue_digest_html(rows):
 	lines = [
 		"<table border='1' cellpadding='6' cellspacing='0'>",
 		"<tr><th>Gate Pass</th><th>Party</th><th>Due</th><th>% Returned</th></tr>",

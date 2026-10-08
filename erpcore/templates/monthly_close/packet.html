@@ -1,0 +1,177 @@
+{% autoescape true %}
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>{{ m.close.name }} r{{ m.close.revision }}</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            font-size: 12px;
+            margin: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 14px;
+        }
+
+        th,
+        td {
+            border: 1px solid #bbb;
+            padding: 4px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .muted {
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>{{ _("Monthly Close Packet") }}: {{ m.close.name }} &middot; {{ _("Revision") }} {{ m.close.revision }}</h2>
+    <p>{{ m.close.company }} &middot; {{ m.close.month }} ({{ m.close.period_start }} &ndash; {{ m.close.period_end }})
+        &middot; {{ m.currency }}</p>
+    <p class="muted">{{ _("Sealed at {0}. Rendered from the sealed manifest (SHA-256 {1}); nothing here is read from live tables.").format(m.sealed_at, manifest_sha) }}</p>
+    <table>
+        <tr>
+            <th>{{ _("Preparer") }}</th>
+            <td>{{ m.close.preparer or "" }}</td>
+            <th>{{ _("Submitted") }}</th>
+            <td>{{ m.close.submitted_by or "" }} {{ m.close.submitted_at or "" }}</td>
+        </tr>
+        <tr>
+            <th>{{ _("Approved") }}</th>
+            <td>{{ m.close.approved_by or "" }} {{ m.close.approved_at or "" }}</td>
+            <th>{{ _("Closed") }}</th>
+            <td>{{ m.close.closed_by or "" }} {{ m.close.closed_at or "" }}</td>
+        </tr>
+        <tr>
+            <th>{{ _("Policy") }}</th>
+            <td>v{{ m.policy.policy_version }} &middot; <small>{{ m.close.policy_hash }}</small></td>
+            <th>{{ _("Fingerprint") }}</th>
+            <td><small>{{ m.close.closing_fingerprint }}</small></td>
+        </tr>
+        <tr>
+            <th>{{ _("Accounting Period") }}</th>
+            <td colspan="3">{% if m.lock.accounting_period %}{{ m.lock.accounting_period.name }} ({{ _("owned") if
+                m.lock.accounting_period.owned else _("associated external") }}), {{ _("lock") }}: {{
+                m.lock.health.status }}{% endif %}</td>
+        </tr>
+    </table>
+    <h3>{{ _("Final checks") }}{% if m.final_check_run %} &ndash; {{ m.final_check_run.name }}{% endif %}</h3>
+    <table>
+        <tr>
+            <th>{{ _("Check") }}</th>
+            <th>{{ _("Severity") }}</th>
+            <th>{{ _("Result") }}</th>
+            <th>{{ _("Details") }}</th>
+            <th>{{ _("Signature") }}</th>
+        </tr>
+        {% for r in (m.final_check_run.results if m.final_check_run else []) %}<tr>
+            <td>{{ r.check_label }} v{{ r.check_version }}</td>
+            <td>{{ r.severity }}</td>
+            <td>{{ r.status }}</td>
+            <td>{{ r.message or "" }}</td>
+            <td><small>{{ (r.finding_signature or "")[:16] }}</small></td>
+        </tr>{% endfor %}
+    </table>
+    <h3>{{ _("Checklist") }}</h3>
+    <table>
+        <tr>
+            <th>{{ _("Task") }}</th>
+            <th>{{ _("Status") }}</th>
+            <th>{{ _("Completed by") }}</th>
+            <th>{{ _("Evidence SHA-256") }}</th>
+            <th>{{ _("Notes") }}</th>
+        </tr>
+        {% for t in m.tasks %}<tr>
+            <td>{{ t.title }}</td>
+            <td>{{ t.status }}</td>
+            <td>{{ t.completed_by or "" }} {{ t.completed_at or "" }}</td>
+            <td><small>{{ t.evidence_hash or "" }}</small></td>
+            <td>{{ t.notes or "" }}</td>
+        </tr>{% endfor %}
+    </table>
+    <h3>{{ _("Exceptions") }}</h3>
+    <table>
+        <tr>
+            <th>{{ _("Exception") }}</th>
+            <th>{{ _("Check") }}</th>
+            <th>{{ _("Status") }}</th>
+            <th>{{ _("Requested / decided") }}</th>
+            <th>{{ _("Explanation") }}</th>
+        </tr>
+        {% for w in m.exceptions %}<tr>
+            <td>{{ w.name }}</td>
+            <td>{{ w.check_label }}</td>
+            <td>{{ w.status }}</td>
+            <td>{{ w.requested_by }} / {{ w.decided_by or "" }}</td>
+            <td>{{ w.explanation or "" }}</td>
+        </tr>{% else %}<tr>
+            <td colspan="5">{{ _("None") }}</td>
+        </tr>{% endfor %}
+    </table>
+    <h3>{{ _("Bank workpapers") }}</h3>
+    <table>
+        <tr>
+            <th>{{ _("Bank account") }}</th>
+            <th>{{ _("Currency") }}</th>
+            <th>{{ _("Ledger") }}</th>
+            <th>{{ _("Statement") }}</th>
+            <th>{{ _("Unexplained") }}</th>
+            <th>{{ _("Certified") }}</th>
+        </tr>
+        {% for b in m.bank_certifications %}<tr>
+            <td>{{ b.bank_account }}</td>
+            <td>{{ b.account_currency }}</td>
+            <td>{{ b.ledger_balance }}</td>
+            <td>{{ b.statement_balance }} ({{ b.statement_date }})</td>
+            <td>{{ b.unexplained_difference }}</td>
+            <td>{{ b.certified_by or "" }} {{ b.certified_at or "" }}</td>
+        </tr>{% else %}<tr>
+            <td colspan="6">{{ _("None") }}</td>
+        </tr>{% endfor %}
+    </table>
+    <h3>{{ _("Report snapshots") }}</h3>
+    <table>
+        <tr>
+            <th>{{ _("Report") }}</th>
+            <th>{{ _("Scope") }}</th>
+            <th>{{ _("Rows") }}</th>
+            <th>SHA-256</th>
+        </tr>
+        {% for r in m.reports %}<tr>
+            <td>{{ r.report_name }}</td>
+            <td>{{ r.scope }}</td>
+            <td>{{ r.row_count }}</td>
+            <td><small>{{ r.sha256 }}</small></td>
+        </tr>{% endfor %}
+    </table>
+    <h3>{{ _("Audit trail") }}</h3>
+    <table>
+        <tr>
+            <th>{{ _("Time") }}</th>
+            <th>{{ _("Rev") }}</th>
+            <th>{{ _("Event") }}</th>
+            <th>{{ _("Actor") }}</th>
+            <th>{{ _("State") }}</th>
+        </tr>
+        {% for e in m.events %}<tr>
+            <td>{{ e.event_time }}</td>
+            <td>{{ e.revision }}</td>
+            <td>{{ e.event_type }}</td>
+            <td>{{ e.actor }}</td>
+            <td>{{ e.from_state or "" }} &rarr; {{ e.to_state or "" }}</td>
+        </tr>{% endfor %}
+    </table>
+    <p class="muted">{% for app, v in m.app_versions.items() %}{{ app }} {{ v.version }} ({{ v.commit or "?" }}) {%
+        endfor %}</p>
+</body>
+
+</html>
+{% endautoescape %}

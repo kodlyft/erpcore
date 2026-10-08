@@ -57,7 +57,7 @@ def setup_custom_fields():
 		if not frappe.db.exists("DocType", doctype):
 			continue
 
-		installable = [d for d in definitions if _target_exists(d)]
+		installable = [d for d in definitions if target_exists(d)]
 		if installable:
 			fields[doctype] = installable
 
@@ -65,7 +65,7 @@ def setup_custom_fields():
 		create_custom_fields(fields, update=True)
 
 
-def _target_exists(definition):
+def target_exists(definition):
 	"""True unless this is a Link/Table field whose target doctype is missing."""
 	if definition.get("fieldtype") not in ("Link", "Table", "Table MultiSelect"):
 		return True
@@ -76,10 +76,10 @@ def _target_exists(definition):
 def get_custom_fields():
 	from erpcore.erp_core.monthly_close.install import custom_fields as monthly_close_fields
 
-	return {**_cheque_custom_fields(), **monthly_close_fields()}
+	return {**cheque_custom_fields(), **monthly_close_fields()}
 
 
-def _cheque_custom_fields():
+def cheque_custom_fields():
 	return {
 		"Payment Entry": [
 			{

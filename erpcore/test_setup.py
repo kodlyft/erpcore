@@ -3,7 +3,7 @@
 
 import frappe
 
-from erpcore.setup import _target_exists, get_custom_fields, setup_custom_fields
+from erpcore.setup import get_custom_fields, setup_custom_fields, target_exists
 from erpcore.tests.utils import ERPCoreTestCase
 
 
@@ -30,17 +30,17 @@ class TestSetup(ERPCoreTestCase):
 		)
 
 	def test_target_exists_only_guards_link_like_fields(self):
-		self.assertTrue(_target_exists({"fieldtype": "Data", "options": "_Test Nothing"}))
-		self.assertTrue(_target_exists({"fieldtype": "Link", "options": "Cheque Leaf"}))
-		self.assertFalse(_target_exists({"fieldtype": "Link", "options": "_Test Nothing"}))
-		self.assertFalse(_target_exists({"fieldtype": "Table", "options": "_Test Nothing"}))
+		self.assertTrue(target_exists({"fieldtype": "Data", "options": "_Test Nothing"}))
+		self.assertTrue(target_exists({"fieldtype": "Link", "options": "Cheque Leaf"}))
+		self.assertFalse(target_exists({"fieldtype": "Link", "options": "_Test Nothing"}))
+		self.assertFalse(target_exists({"fieldtype": "Table", "options": "_Test Nothing"}))
 
 	def test_installing_the_fields_twice_does_not_duplicate_them(self):
 		setup_custom_fields()
 
 		for doctype, definitions in get_custom_fields().items():
 			for definition in definitions:
-				if not _target_exists(definition):
+				if not target_exists(definition):
 					continue
 
 				with self.subTest(doctype=doctype, fieldname=definition["fieldname"]):

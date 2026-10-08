@@ -194,13 +194,21 @@ jobs:
         working-directory: /home/runner/frappe-bench
         run: |
           echo "127.0.0.1 test_site_ui" | sudo tee -a /etc/hosts
-          DEV_SERVER=1 bench serve --port 8000 &
-          bench worker &
+          mkdir -p logs
+          DEV_SERVER=1 bench serve --port 8000 > logs/ui-web.log 2>&1 &
+
+          bench worker --queue default,short,long > logs/ui-worker.log 2>&1 &
           for _ in $(seq 1 60); do
             curl -sf http://test_site_ui:8000/api/method/ping > /dev/null && break
             sleep 2
           done
           curl -sf http://test_site_ui:8000/api/method/ping
+          for _ in $(seq 1 30); do
+            bench doctor 2>/dev/null | grep -Eq "Workers online: [1-9]" && break
+            sleep 2
+          done
+          bench doctor | tee logs/ui-doctor.log
+          grep -Eq "Workers online: [1-9]" logs/ui-doctor.log
         env:
           CI: 'Yes' 
 
@@ -218,4 +226,5 @@ jobs:
           path: |
             /home/runner/frappe-bench/apps/erpcore/cypress/screenshots
             /home/runner/frappe-bench/cypressVideos
+            /home/runner/frappe-bench/logs
           if-no-files-found: ignore

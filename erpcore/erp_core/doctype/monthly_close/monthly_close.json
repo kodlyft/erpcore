@@ -27,6 +27,7 @@
   "template_version",
   "policy",
   "policy_version",
+  "policy_hash",
   "self_approval_used",
   "notes_section",
   "notes",
@@ -57,13 +58,20 @@
   "reopen_count",
   "reopened_by",
   "reopened_at",
+  "revalidated_by",
+  "revalidated_at",
   "column_break_reopen",
   "pending_action",
   "pending_requested_by",
   "pending_token",
   "last_error",
+  "pending_job_id",
+  "pending_attempt",
+  "pending_requested_at",
+  "pending_started_at",
   "template_section",
-  "template_snapshot"
+  "template_snapshot",
+  "policy_snapshot"
  ],
  "fields": [
   {
@@ -202,6 +210,13 @@
    "label": "Policy Version",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "policy_hash",
+   "fieldtype": "Data",
+   "label": "Policy Hash",
+   "read_only": 1,
+   "no_copy": 1
   },
   {
    "default": "0",
@@ -420,6 +435,21 @@
    "read_only": 1
   },
   {
+   "fieldname": "revalidated_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Revalidated By",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "revalidated_at",
+   "fieldtype": "Datetime",
+   "label": "Revalidated At",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
    "fieldname": "column_break_reopen",
    "fieldtype": "Column Break"
   },
@@ -454,6 +484,34 @@
    "read_only": 1
   },
   {
+   "fieldname": "pending_job_id",
+   "fieldtype": "Data",
+   "label": "Pending Job ID",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "pending_attempt",
+   "fieldtype": "Int",
+   "label": "Pending Attempt",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "pending_requested_at",
+   "fieldtype": "Datetime",
+   "label": "Pending Requested At",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "pending_started_at",
+   "fieldtype": "Datetime",
+   "label": "Pending Started At",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
    "collapsible": 1,
    "fieldname": "template_section",
    "fieldtype": "Section Break",
@@ -466,6 +524,14 @@
    "no_copy": 1,
    "options": "JSON",
    "read_only": 1
+  },
+  {
+   "fieldname": "policy_snapshot",
+   "fieldtype": "Code",
+   "options": "JSON",
+   "label": "Policy Snapshot",
+   "read_only": 1,
+   "no_copy": 1
   }
  ],
  "links": [
@@ -505,7 +571,7 @@
    "link_fieldname": "monthly_close"
   }
  ],
- "modified": "2026-10-07 10:00:00",
+ "modified": "2026-10-08 10:00:00",
  "modified_by": "Administrator",
  "module": "ERP Core",
  "name": "Monthly Close",

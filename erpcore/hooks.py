@@ -161,6 +161,8 @@ has_permission = {
 	)
 }
 
+has_permission["File"] = "erpcore.erp_core.monthly_close.evidence.file_has_permission"
+
 # Document Events
 # ---------------
 # Hook on document methods and events
@@ -187,7 +189,25 @@ doc_events = {
 	"Stock Ledger Entry": {
 		"before_submit": "erpcore.erp_core.monthly_close.posting_guard.guard_ledger_entry",
 	},
-	# Monthly close: Accounting Periods owned by a close change only through the close.
+	"Payment Ledger Entry": {
+		"before_submit": "erpcore.erp_core.monthly_close.posting_guard.guard_ledger_entry",
+	},
+	"Advance Payment Ledger Entry": {
+		"before_submit": "erpcore.erp_core.monthly_close.posting_guard.guard_advance_ledger_entry",
+	},
+	"Repost Item Valuation": {
+		"validate": "erpcore.erp_core.monthly_close.posting_guard.guard_repost",
+	},
+	"Repost Accounting Ledger": {
+		"validate": "erpcore.erp_core.monthly_close.posting_guard.guard_repost",
+	},
+	"Repost Payment Ledger": {
+		"validate": "erpcore.erp_core.monthly_close.posting_guard.guard_repost",
+	},
+	"File": {
+		"before_validate": "erpcore.erp_core.monthly_close.evidence.protect_evidence_file",
+		"on_trash": "erpcore.erp_core.monthly_close.evidence.protect_evidence_file_delete",
+	},
 	"Accounting Period": {
 		"validate": "erpcore.erp_core.monthly_close.native_lock.protect_owned_period",
 		"on_trash": "erpcore.erp_core.monthly_close.native_lock.protect_owned_period_delete",
@@ -196,6 +216,11 @@ doc_events = {
 
 # Registered close checks from other apps: dotted module paths that call register_check on import.
 erpcore_monthly_close_checks = []
+
+# Extra draft voucher types for the close's draft check and fingerprint:
+# [{"doctype": "My Voucher", "date_field": "posting_date", "amount_field": "base_grand_total"}].
+# Every doctype in ERPNext's `period_closing_doctypes` hook is included automatically.
+erpcore_monthly_close_draft_vouchers = []
 
 # Scheduled Tasks
 # ---------------
@@ -214,6 +239,7 @@ scheduler_events = {
 	],
 	"hourly": [
 		"erpcore.erp_core.monthly_close.scheduled.recover_stuck_runs",
+		"erpcore.erp_core.monthly_close.scheduled.recover_stalled_closes",
 	],
 }
 

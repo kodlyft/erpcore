@@ -9,7 +9,7 @@ from erpcore.tests.utils import ERPCoreTestCase
 
 class IntegrationTestChequeVoidReason(ERPCoreTestCase):
 	def test_every_default_reason_is_seeded(self):
-		for reason_name, applies_to, _description in DEFAULT_VOID_REASONS:
+		for reason_name, applies_to in [row[:2] for row in DEFAULT_VOID_REASONS]:
 			with self.subTest(reason=reason_name):
 				self.assertEqual(
 					frappe.db.get_value("Cheque Void Reason", reason_name, "applies_to"), applies_to

@@ -18,6 +18,7 @@
   "prepared_by",
   "certified_by",
   "certified_at",
+  "certified_hash",
   "ledger_section",
   "ledger_balance",
   "outstanding_receipts",
@@ -28,8 +29,10 @@
   "statement_date",
   "statement_balance",
   "statement_file",
+  "statement_hash",
   "unexplained_difference",
-  "difference_explanation"
+  "difference_explanation",
+  "bridging_note"
  ],
  "fields": [
   {
@@ -122,6 +125,13 @@
    "read_only": 1
   },
   {
+   "fieldname": "certified_hash",
+   "fieldtype": "Data",
+   "label": "Certified Content Hash",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
    "fieldname": "ledger_section",
    "fieldtype": "Section Break",
    "label": "Reconciliation"
@@ -185,6 +195,13 @@
    "label": "Statement"
   },
   {
+   "fieldname": "statement_hash",
+   "fieldtype": "Data",
+   "label": "Statement SHA-256",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
    "fieldname": "unexplained_difference",
    "fieldtype": "Currency",
    "label": "Difference",
@@ -195,10 +212,16 @@
    "fieldname": "difference_explanation",
    "fieldtype": "Small Text",
    "label": "Explanation of Difference"
+  },
+  {
+   "fieldname": "bridging_note",
+   "fieldtype": "Small Text",
+   "label": "Bridging to Month End",
+   "description": "Required when the statement is not dated exactly on the last day of the month: how the statement balance was rolled to month end."
   }
  ],
  "links": [],
- "modified": "2026-10-07 10:00:00",
+ "modified": "2026-10-08 10:00:00",
  "modified_by": "Administrator",
  "module": "ERP Core",
  "name": "Monthly Close Bank Certification",

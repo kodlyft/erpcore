@@ -4,6 +4,7 @@
 import frappe
 
 from erpcore.erp_core.monthly_close import api, lifecycle
+from erpcore.erp_core.monthly_close.constants import ROLE_MANAGER, ROLE_PREPARER
 from erpcore.erp_core.monthly_close.tests.utils import (
 	AUDITOR,
 	OTHER_COMPANY_USER,
@@ -12,6 +13,7 @@ from erpcore.erp_core.monthly_close.tests.utils import (
 	MonthlyCloseTestCase,
 	as_user,
 	drive_to_closed,
+	month,
 	new_close,
 )
 from erpcore.tests.utils import TEST_COMPANY
@@ -46,7 +48,7 @@ class TestPermissions(MonthlyCloseTestCase):
 
 			from erpcore.erp_core.report.monthly_close_audit_trail.monthly_close_audit_trail import execute
 
-			_columns, rows = execute({})
+			rows = execute({})[1]
 			self.assertFalse([r for r in rows if r.get("monthly_close") == name])
 
 			# Private snapshot files are served only to users who can read the snapshot.
@@ -91,3 +93,53 @@ class TestPermissions(MonthlyCloseTestCase):
 				).insert,
 				ignore_permissions=True,
 			)
+
+	def test_restricted_system_manager_keeps_company_restriction(self):
+		"""System Manager is a role, not a data-scope bypass: Company User Permissions still apply."""
+		from erpcore.erp_core.monthly_close import permissions
+		from erpcore.tests.utils import OTHER_COMPANY, make_user
+
+		user = "_test_close_restricted_sm@example.com"
+		make_user(user, "_Test", "restricted sm", roles=["System Manager", ROLE_MANAGER])
+		restrict(user, OTHER_COMPANY)
+		name = new_close(3)
+
+		with as_user(user):
+			self.assertFalse(permissions.has_company_access(TEST_COMPANY))
+			self.assertFalse(frappe.has_permission("Monthly Close", "read", name))
+			self.assertNotIn(name, frappe.get_list("Monthly Close", pluck="name"))
+			self.assertRaises(frappe.PermissionError, lifecycle.start_close, name)
+			self.assertRaises(frappe.PermissionError, api.get_dashboard, name)
+			self.assertRaises(
+				frappe.PermissionError, permissions.require_finance_evidence_access, TEST_COMPANY
+			)
+
+	def test_permission_scoped_to_monthly_close_applies_everywhere(self):
+		"""A User Permission `applicable_for` Monthly Close restricts service code exactly like the hooks."""
+		from erpcore.erp_core.monthly_close import permissions
+		from erpcore.tests.utils import OTHER_COMPANY, make_user
+
+		user = "_test_close_scoped@example.com"
+		make_user(user, "_Test", "scoped", roles=[ROLE_PREPARER, ROLE_MANAGER])
+		restrict(user, OTHER_COMPANY, applicable_for="Monthly Close")
+		name = new_close(3)
+
+		with as_user(user):
+			self.assertFalse(frappe.has_permission("Monthly Close", "read", name))
+			self.assertFalse(permissions.has_company_access(TEST_COMPANY))
+			self.assertRaises(frappe.PermissionError, lifecycle.start_close, name)
+			self.assertRaises(frappe.PermissionError, lifecycle.create_close, TEST_COMPANY, month(5))
+
+
+def restrict(user: str, company: str, applicable_for: str | None = None):
+	frappe.get_doc(
+		{
+			"doctype": "User Permission",
+			"user": user,
+			"allow": "Company",
+			"for_value": company,
+			"apply_to_all_doctypes": 0 if applicable_for else 1,
+			"applicable_for": applicable_for,
+		}
+	).insert(ignore_permissions=True)
+	frappe.clear_cache(user=user)

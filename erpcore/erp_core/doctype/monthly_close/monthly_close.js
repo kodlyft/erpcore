@@ -131,7 +131,9 @@ function add_actions(frm, data) {
 		frm.add_custom_button(__("Hard Close"), () => confirm_hard_close(frm, data)).addClass("btn-danger");
 	}
 
-	if (s === "Closing" && frm.doc.last_error && mc_has_role("Close Manager")) {
+	const pending = data.pending || {};
+	const seal_stalled = pending.action === "Seal Packet" && pending.stalled;
+	if (s === "Closing" && (frm.doc.last_error || seal_stalled) && mc_has_role("Close Manager")) {
 		frm.add_custom_button(
 			__("Retry Sealing"),
 			() => mc_call(frm, "retry_seal", {}, __("Sealing queued")),
@@ -164,10 +166,18 @@ function add_actions(frm, data) {
 				group,
 			);
 		}
-		if (frm.doc.revalidation_required && mc_has_role("Close Manager")) {
+		if (frm.doc.revalidation_required && mc_has_role("Close Reviewer", "Close Manager")) {
 			frm.add_custom_button(
 				__("Confirm Revalidation"),
-				() => mc_call(frm, "confirm_revalidation", {}, __("Revalidated")),
+				() =>
+					mc_reason_dialog(
+						__("Confirm Revalidation"),
+						__("What did you review?"),
+						(comment) => mc_call(frm, "confirm_revalidation", { comment }, __("Revalidated")),
+						__(
+							"Earlier months must be reclosed first. The checks are rerun against this locked month; changed balances need a reopen and reclose instead.",
+						),
+					),
 				group,
 			);
 		}
@@ -213,8 +223,41 @@ function add_actions(frm, data) {
 		});
 
 	if (["Closed", "Closing"].includes(s)) {
-		frm.add_custom_button(__("Close Packet"), () => frm.print_doc(), group);
+		frm.add_custom_button(__("Live Packet View"), () => frm.print_doc(), group);
 	}
+	if (s === "Closed" || cint(frm.doc.revision) > 1) {
+		frm.add_custom_button(__("Sealed Packet"), () => mc_open_sealed_packet(frm), group);
+	}
+}
+
+function mc_open_sealed_packet(frm) {
+	const revisions = [];
+	for (let r = cint(frm.doc.revision); r >= 1; r--) revisions.push(String(r));
+	frappe.prompt(
+		[
+			{
+				fieldname: "revision",
+				fieldtype: "Select",
+				label: __("Revision"),
+				options: revisions,
+				default: revisions[0],
+				reqd: 1,
+			},
+		],
+		({ revision }) =>
+			frappe
+				.call({ method: `${MC_API}.export_revision_packet`, args: { name: frm.doc.name, revision } })
+				.then(({ message }) => {
+					const packet = message["Close Packet"];
+					if (!packet) return;
+					if (!packet.verified) {
+						frappe.msgprint(__("The stored packet no longer matches its recorded hash."));
+					}
+					window.open(packet.file);
+				}),
+		__("Open Sealed Packet"),
+		__("Open"),
+	);
 }
 
 function confirm_hard_close(frm, data) {

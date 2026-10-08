@@ -6,14 +6,14 @@
 import frappe
 
 
-def _relax_password_policy():
+def relax_password_policy():
 	"""ERPNext's bootstrap creates users whose password is literally "password"."""
 	if frappe.db.get_single_value("System Settings", "enable_password_policy"):
 		frappe.db.set_single_value("System Settings", "enable_password_policy", 0)
 		frappe.clear_cache()
 
 
-_relax_password_policy()
+relax_password_policy()
 
 from erpnext.tests.utils import ERPNextTestSuite
 from frappe.utils import add_days, nowdate, nowtime
@@ -140,11 +140,11 @@ def make_outgoing_email_account():
 
 def make_users():
 	"""A user holding Gate Keeper, and one holding nothing at all."""
-	_make_user(GUARD_USER, "_Test", "Gate Keeper", roles=["Gate Keeper"])
-	_make_user(PLAIN_USER, "_Test", "No Roles", roles=[])
+	make_user(GUARD_USER, "_Test", "Gate Keeper", roles=["Gate Keeper"])
+	make_user(PLAIN_USER, "_Test", "No Roles", roles=[])
 
 
-def _make_user(email, first_name, last_name, roles):
+def make_user(email, first_name, last_name, roles):
 	if not frappe.db.exists("User", email):
 		user = frappe.get_doc(
 			{

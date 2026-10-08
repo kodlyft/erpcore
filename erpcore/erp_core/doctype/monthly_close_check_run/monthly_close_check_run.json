@@ -10,14 +10,18 @@
   "company",
   "revision",
   "policy_version",
+  "policy_hash",
   "purpose",
   "column_break_head",
   "status",
   "requested_by",
   "job_id",
   "attempts",
+  "claim_token",
+  "lease_expires_at",
   "started_at",
   "finished_at",
+  "snapshot_at",
   "summary_section",
   "blockers",
   "warnings",
@@ -63,10 +67,17 @@
    "read_only": 1
   },
   {
+   "fieldname": "policy_hash",
+   "fieldtype": "Data",
+   "label": "Policy Hash",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
    "fieldname": "purpose",
    "fieldtype": "Select",
    "label": "Purpose",
-   "options": "Background\nFinal",
+   "options": "Background\nFinal\nRevalidation",
    "read_only": 1
   },
   {
@@ -103,6 +114,20 @@
    "read_only": 1
   },
   {
+   "fieldname": "claim_token",
+   "fieldtype": "Data",
+   "label": "Claim Token",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "lease_expires_at",
+   "fieldtype": "Datetime",
+   "label": "Lease Expires At",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
    "fieldname": "started_at",
    "fieldtype": "Datetime",
    "label": "Started At",
@@ -114,6 +139,13 @@
    "in_list_view": 1,
    "label": "Finished At",
    "read_only": 1
+  },
+  {
+   "fieldname": "snapshot_at",
+   "fieldtype": "Datetime",
+   "label": "Data Read At",
+   "read_only": 1,
+   "no_copy": 1
   },
   {
    "fieldname": "summary_section",
@@ -185,7 +217,7 @@
  ],
  "in_create": 1,
  "links": [],
- "modified": "2026-10-07 10:00:00",
+ "modified": "2026-10-08 10:00:00",
  "modified_by": "Administrator",
  "module": "ERP Core",
  "name": "Monthly Close Check Run",

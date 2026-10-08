@@ -171,3 +171,36 @@ class TestInstall(MonthlyCloseTestCase):
 		)
 		self.assertRaises(ClosedMonthError, guard_ledger_entry, ledger_row)
 		self.assertTrue(name)
+
+	def test_owned_period_names_are_migrated_and_external_ones_kept(self):
+		from erpcore.erp_core.monthly_close.native_lock import period_name_for
+		from erpcore.patches.v1 import monthly_close_company_scoped_period_names as patch
+
+		name = drive_to_closed(3)
+		close = frappe.get_doc("Monthly Close", name)
+		owned = close.accounting_period
+		# The name an earlier release gave it.
+		frappe.db.set_value("Accounting Period", owned, "period_name", f"Monthly Close {close.month}")
+		external = frappe.get_doc(
+			{
+				"doctype": "Accounting Period",
+				"period_name": "_Test External Keep",
+				"company": TEST_COMPANY,
+				"start_date": month(20),
+				"end_date": get_last_day(month(20)),
+				"closed_documents": [{"document_type": "Journal Entry", "closed": 1}],
+			}
+		).insert(ignore_permissions=True)
+		external_name_before = frappe.db.get_value("Accounting Period", external.name, "period_name")
+
+		patch.execute()
+		patch.execute()  # idempotent
+
+		self.assertEqual(
+			frappe.db.get_value("Accounting Period", owned, "period_name"), period_name_for(close)
+		)
+		self.assertIn(TEST_COMPANY, period_name_for(close))
+		self.assertEqual(
+			frappe.db.get_value("Accounting Period", external.name, "period_name"), external_name_before
+		)
+		self.assertTrue(frappe.db.exists("Accounting Period", owned), "document names never change")
