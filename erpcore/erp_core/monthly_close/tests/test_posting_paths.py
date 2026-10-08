@@ -149,21 +149,26 @@ class TestPostingPaths(MonthlyCloseTestCase):
 		from erpnext.stock.doctype.item.test_item import make_item
 		from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
 
+		from erpcore.erp_core.monthly_close.tests.utils import reopen_close
+
 		item = make_item("_Test MC Valued Item", {"is_stock_item": 1}).name
 		other = make_item("_Test MC Other Item", {"is_stock_item": 1}).name
 		make_stock_entry(
 			item_code=item, qty=5, rate=10, to_warehouse=WAREHOUSE, posting_date=add_days(month(3), 5)
 		)
+		earlier = drive_to_closed(4)
+		drive_to_closed(3, cutover=False)
 		sle_before = frappe.get_all(
 			"Stock Ledger Entry",
 			filters={"item_code": item, "is_cancelled": 0},
 			fields=["name", "valuation_rate", "stock_value", "qty_after_transaction"],
 			order_by="name",
 		)
-		drive_to_closed(3)
 
-		# Month 4 is before the cutover, so unmanaged and open, but a receipt there would
-		# revalue the locked month's stock of the same item and warehouse.
+		# Corrections go into the reopened earlier month; the later closed month is flagged.
+		reopen_close(earlier)
+
+		# A receipt of the same item would rewrite the later month's own stock movement.
 		frappe.db.savepoint("mc_backdated")
 		try:
 			with self.assertRaises(ClosedMonthError):
@@ -182,7 +187,7 @@ class TestPostingPaths(MonthlyCloseTestCase):
 			sle_before,
 		)
 
-		# An item with no stock in the locked month is not affected.
+		# An item with no stock in the locked month only changes its (flagged) opening balance.
 		make_stock_entry(
 			item_code=other, qty=2, rate=10, to_warehouse=WAREHOUSE, posting_date=add_days(month(4), 5)
 		)

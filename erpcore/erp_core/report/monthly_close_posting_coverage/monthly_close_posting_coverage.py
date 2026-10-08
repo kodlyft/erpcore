@@ -16,6 +16,22 @@ import frappe
 from frappe import _
 
 TESTS = "erpcore/erp_core/monthly_close/tests/"
+VOUCHER_TEST = TESTS + "test_voucher_types.py::test_submit_and_cancel_into_closed_month_are_refused"
+TESTED_TYPES = {
+	"Journal Entry": TESTS + "test_hard_close.py::test_closed_month_refuses_postings_but_next_month_works",
+	**{
+		doctype: VOUCHER_TEST
+		for doctype in (
+			"Sales Invoice",
+			"Purchase Invoice",
+			"Payment Entry",
+			"Stock Entry",
+			"Purchase Receipt",
+			"Delivery Note",
+			"Stock Reconciliation",
+		)
+	},
+}
 
 
 def native_doc() -> str:
@@ -60,11 +76,7 @@ def rows() -> list[dict]:
 	data = []
 
 	for doctype in closing:
-		evidence = (
-			TESTS + "test_hard_close.py::test_closed_month_refuses_postings_but_next_month_works"
-			if doctype == "Journal Entry"
-			else ""
-		)
+		evidence = TESTED_TYPES.get(doctype, "")
 		data += [
 			row(
 				_("{0}: create or save a draft dated in the month").format(_(doctype)),
@@ -79,7 +91,7 @@ def rows() -> list[dict]:
 				_("Posts ledgers into the month"),
 				native_doc() + " + " + native_gl(),
 				guard(),
-				_("Covered") if doctype == "Journal Entry" else _("Covered (untested type)"),
+				_("Covered") if evidence else _("Covered (untested type)"),
 				evidence,
 			),
 			row(
@@ -87,7 +99,7 @@ def rows() -> list[dict]:
 				_("Reverses ledgers dated in the month (immutable ledger off)"),
 				native_gl(),
 				guard(),
-				_("Covered") if doctype == "Journal Entry" else _("Covered (untested type)"),
+				_("Covered") if evidence else _("Covered (untested type)"),
 				evidence,
 			),
 			row(
@@ -195,11 +207,23 @@ def rows() -> list[dict]:
 			TESTS + "test_checks_accuracy.py::test_unfinished_repost_is_non_waivable_blocker",
 		),
 		row(
+			_(
+				"GL / Stock / Payment Ledger posting dated before a locked month (unmanaged pre-cutover month, or any open earlier month)"
+			),
+			_("Changes the locked month's balances brought forward"),
+			_("None for later months"),
+			_(
+				"erpcore: refused unless every later locked month is flagged for revalidation (reopening an earlier month flags them); hard close also requires every earlier managed month Closed and revalidated"
+			),
+			_("Covered"),
+			TESTS + "test_earlier_months.py",
+		),
+		row(
 			_("GL / PLE posting in an earlier reopened month"),
 			_("Changes only opening balances of later locked months"),
 			_("None for later months"),
 			_(
-				"Later Closed months are flagged for revalidation; revalidation compares sealed balances and reruns checks"
+				"Later Closed months are flagged at reopen; revalidation compares sealed balances (incl. brought forward) and reruns checks"
 			),
 			_("Covered"),
 			TESTS + "test_hard_close.py::test_revalidation_requires_earlier_month_closed",

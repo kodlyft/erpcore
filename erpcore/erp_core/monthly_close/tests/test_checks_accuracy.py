@@ -290,3 +290,136 @@ class TestChecksAccuracy(MonthlyCloseTestCase):
 		self.assertIn(OTHER_BANK_ACCOUNT, unexplained)
 		self.assertEqual(unexplained[OTHER_BANK_ACCOUNT]["currency"], "USD")
 		self.assertEqual(finding.amount, 5, "only company-currency differences are summed")
+
+	def test_stock_mismatch_carried_in_from_an_earlier_month(self):
+		"""A stock/GL difference created before the month is invisible to the month's voucher comparison."""
+		from erpnext.stock.doctype.item.test_item import make_item
+		from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
+
+		from erpcore.erp_core.monthly_close.checks import stock
+
+		company = "_Test Company with perpetual inventory"
+		ctx = bare_context(company, 3)
+		before = {d["account"]: d["difference"] for d in stock.cumulative_differences(ctx)}
+
+		item = make_item("_Test MC Perpetual Item", {"is_stock_item": 1}).name
+		make_stock_entry(
+			item_code=item,
+			qty=4,
+			rate=25,
+			to_warehouse="Stores - TCP1",
+			company=company,
+			posting_date=add_days(month(5), 3),
+		)
+		# A legacy import booked straight to the stock account, two months before the close.
+		gl_pair(company, add_days(month(5), 4), "Stock In Hand - TCP1", "Cash - TCP1", 40, "MC-TEST-STOCK-GL")
+
+		after = {d["account"]: d["difference"] for d in stock.cumulative_differences(ctx)}
+		self.assertEqual(after.get("Stock In Hand - TCP1", 0) - before.get("Stock In Hand - TCP1", 0), -40)
+
+		finding = stock.stock_accounting(ctx)
+		self.assertEqual(finding.outcome, FINDING)
+		in_month = [d for d in finding.identities if d["scope"] == "Voucher in month"]
+		self.assertNotIn("MC-TEST-STOCK-GL", [d.get("voucher_no") for d in in_month])
+		self.assertIn(
+			"Stock In Hand - TCP1",
+			[d.get("account") for d in finding.identities if d["scope"] == "As at month end"],
+		)
+
+	def test_gl_payment_ledger_mismatch_is_an_integrity_finding(self):
+		name = started()
+		before = subledgers.ar_ap_ledger_integrity(context(name))
+		# Receivable GL rows with no Payment Ledger: what a direct import or a broken repost leaves.
+		gl_pair(
+			TEST_COMPANY,
+			add_days(month(3), 6),
+			"Debtors - _TC",
+			"Sales - _TC",
+			60,
+			"MC-TEST-GLPLE",
+			party=("Customer", "_Test Customer"),
+		)
+		finding = subledgers.ar_ap_ledger_integrity(context(name))
+		self.assertEqual(finding.outcome, FINDING)
+		self.assertIn("MC-TEST-GLPLE", [r.get("voucher_no") for r in finding.identities])
+		self.assertEqual(finding.count, (before.count or 0) + 1)
+		# The ordinary ageing review is a separate check and does not report it as an integrity failure.
+		self.assertNotIn("MC-TEST-GLPLE", str(subledgers.ar_ap_review(context(name)).identities))
+
+	def test_trial_balance_is_checked_per_finance_book(self):
+		"""Balanced overall but not within its finance book: still an unbalanced ledger."""
+		name = started()
+		self.assertEqual(ledger.trial_balance(context(name)).outcome, PASSED)
+		gl_pair(
+			TEST_COMPANY,
+			add_days(month(3), 7),
+			"_Test Cash - _TC",
+			"_Test Bank - _TC",
+			50,
+			"MC-TEST-FB",
+			debit_finance_book="Test Finance Book 1",
+		)
+		finding = ledger.trial_balance(context(name))
+		self.assertEqual(finding.outcome, FINDING)
+		self.assertFalse(finding.waivable)
+		books = {row.get("finance_book") for row in finding.identities if row.get("scope")}
+		self.assertIn("Test Finance Book 1", books)
+		self.assertIn("MC-TEST-FB", [row.get("voucher_no") for row in finding.identities])
+
+
+def bare_context(company: str, offset: int) -> CheckContext:
+	"""A check context for a company/month without a close (checks only read ctx)."""
+	start = month(offset)
+	return CheckContext(
+		company=company,
+		period_start=start,
+		period_end=get_last_day(start),
+		fiscal_year=None,
+		close_name=None,
+		revision=1,
+		currency=frappe.get_cached_value("Company", company, "default_currency"),
+		precision=2,
+		severity="Blocker",
+		tolerance=0,
+		sample_limit=20,
+		policy=frappe._dict(),
+	)
+
+
+def gl_pair(
+	company,
+	posting_date,
+	debit_account,
+	credit_account,
+	amount,
+	voucher_no,
+	party=None,
+	debit_finance_book=None,
+):
+	"""A balanced pair of GL rows written as they would exist after an import, without other ledgers."""
+	cost_center = frappe.get_cached_value("Company", company, "cost_center")
+	for suffix, account, debit, credit, finance_book, row_party in (
+		("D", debit_account, amount, 0, debit_finance_book, party),
+		("C", credit_account, 0, amount, None, None),
+	):
+		insert_raw(
+			{
+				"doctype": "GL Entry",
+				"name": f"{voucher_no}-{suffix}",
+				"company": company,
+				"posting_date": posting_date,
+				"account": account,
+				"account_currency": frappe.get_cached_value("Account", account, "account_currency"),
+				"cost_center": cost_center,
+				"debit": debit,
+				"credit": credit,
+				"debit_in_account_currency": debit,
+				"credit_in_account_currency": credit,
+				"finance_book": finance_book,
+				"party_type": row_party[0] if row_party else None,
+				"party": row_party[1] if row_party else None,
+				"voucher_type": "Journal Entry",
+				"voucher_no": voucher_no,
+				"is_cancelled": 0,
+			}
+		)

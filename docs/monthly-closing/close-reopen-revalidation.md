@@ -19,7 +19,8 @@
 
 ## Hard close
 
-Request (Close Manager, Approved close, month ended, previous managed month Closed) →
+Request (Close Manager, Approved close, month ended, every earlier managed month Closed
+and none awaiting revalidation) →
 background job:
 
 1. Claim: the job records that it started; a stale token exits.

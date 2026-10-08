@@ -137,20 +137,36 @@ def preflight(close) -> list[str]:
 
 
 def sequence_problems(close) -> list[str]:
-	"""After the cutover, months close in order."""
+	"""After the cutover, months close in order, and only on top of settled earlier months.
+
+	The previous month must be Closed, and no earlier managed month may be open
+	or awaiting revalidation: a month closed on top of an open earlier month
+	would not be flagged when that month's corrections change its opening
+	balances.
+	"""
 	policy_cutover = frappe.db.get_value("Monthly Close Policy", close.company, "cutover_period")
 	previous = previous_month_start(close.period_start)
 	if policy_cutover and previous < getdate(policy_cutover):
 		return []
 
-	state = frappe.db.get_value(CLOSE_DOCTYPE, {"company": close.company, "period_start": previous}, "state")
-	if state != CLOSED:
-		return [
-			_("{0} must be closed first (it is {1}).").format(
-				month_label(previous), _(state or "not started")
-			)
-		]
-	return []
+	earlier = frappe.get_all(
+		CLOSE_DOCTYPE,
+		filters={
+			"company": close.company,
+			"period_start": ["between", [getdate(policy_cutover or "1900-01-01"), previous]],
+		},
+		fields=["period_start", "month", "state", "revalidation_required"],
+		order_by="period_start asc",
+	)
+	problems = []
+	if not any(getdate(row.period_start) == getdate(previous) for row in earlier):
+		problems.append(_("{0} must be closed first (it is not started).").format(month_label(previous)))
+	for row in earlier:
+		if row.state != CLOSED:
+			problems.append(_("{0} must be closed first (it is {1}).").format(row.month, _(row.state)))
+		elif row.revalidation_required:
+			problems.append(_("{0} must be revalidated first.").format(row.month))
+	return problems
 
 
 def request_hard_close(name: str) -> None:

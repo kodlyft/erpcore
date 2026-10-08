@@ -27,12 +27,20 @@ native control, erpcore control, status and the regression test that proves it.
 
 ## Earlier-month postings and later locked months
 
-GL and Payment Ledger postings in an open month change only the *opening* balances of
-later months. Because months close in order after the cutover, this happens only after
-an earlier month was reopened. Reopening flags every later Closed month for
-revalidation (its lock stays), and revalidation compares the sealed balances,
-including balances brought forward. See
-[close-reopen-revalidation.md](close-reopen-revalidation.md).
+A GL, Stock Ledger or Payment Ledger row dated before a locked month changes that
+month's balances brought forward. Such a posting is **refused unless every later locked
+month is already flagged for revalidation**. This applies equally to months before the
+cutover (never managed) and to open managed months.
+
+* The controlled way in is to reopen the earliest closed month after the posting date:
+  reopening flags every later Closed month (their locks stay), and the posting is then
+  allowed. Revalidation later compares the sealed balances, including balances brought
+  forward, and refuses if they changed. See
+  [close-reopen-revalidation.md](close-reopen-revalidation.md).
+* A month can be hard-closed only when every earlier managed month is Closed and
+  revalidated, so a month is never closed on top of an open earlier month.
+* Stock postings that would revalue a later locked month's own stock movement (same
+  item and warehouse) stay refused even when that month is flagged.
 
 ## Not covered
 

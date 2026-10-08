@@ -21,15 +21,16 @@ Hooked paths (see hooks.py and `monthly_close_posting_coverage` for the matrix):
 
 Cumulative effects on later months:
 
-* A Stock Ledger Entry dated in an open month revalues every later SLE of the
-  same item and warehouse (`update_qty_in_future_sle` and the repost it queues).
-  If any of those later SLEs is in a locked month, the posting is refused.
-* GL and Payment Ledger postings in an open month change only the *opening*
-  balances of later months, never their movement. A later month is locked only
-  after the earlier month closed (sequence rule after cutover), so this can
-  happen only after the earlier month was reopened; reopening flags every
-  later Closed month for revalidation, and revalidation compares the closing
-  fingerprint (which includes balances brought forward). See closing.py.
+* Any GL, Stock Ledger or Payment Ledger row dated before a locked month
+  changes that month's balances brought forward. It is refused unless every
+  later locked month is already flagged for revalidation, which happens when an
+  earlier managed month is reopened (reopen.py). That covers months before the
+  cutover (never managed) as well as reopened months: a closed month's opening
+  balances never change without either a refusal or a revalidation flag.
+* A Stock Ledger Entry also revalues every later SLE of the same item and
+  warehouse (`update_qty_in_future_sle` and the repost it queues), changing the
+  later month's own movement, not just its opening. That is refused even when
+  the later month is flagged.
 
 The gate is the Monthly Close row for (company, month start), which has a
 unique key:
@@ -108,8 +109,20 @@ def guard_ledger_entry(doc, method=None):
 	if close and close.state in LOCKED_STATES:
 		refuse(what, doc.posting_date, close)
 
+	later = locked_closes_after(doc.company, doc.posting_date)
+	unflagged = [c for c in later if not c.revalidation_required]
+	if unflagged:
+		refuse(
+			what,
+			doc.posting_date,
+			unflagged[0],
+			_(
+				"It would change the balances brought forward into {0}. Reopen {0} (or the earliest closed month after this date) first."
+			).format(month_label(unflagged[0].period_start)),
+		)
+
 	if doc.doctype == "Stock Ledger Entry":
-		guard_later_stock_months(doc, what)
+		guard_later_stock_months(doc, what, later)
 
 
 def guard_advance_ledger_entry(doc, method=None):
@@ -130,9 +143,9 @@ def guard_advance_ledger_entry(doc, method=None):
 	)
 
 
-def guard_later_stock_months(sle, what: str):
-	"""Refuse a stock posting that would revalue SLEs of a later locked month."""
-	for close in locked_closes_after(sle.company, sle.posting_date):
+def guard_later_stock_months(sle, what: str, later: list):
+	"""Refuse a stock posting that would revalue SLEs of a later locked month, flagged or not."""
+	for close in later:
 		affected = frappe.db.exists(
 			"Stock Ledger Entry",
 			{
@@ -159,7 +172,7 @@ def locked_closes_after(company: str, posting_date) -> list:
 	month_start = get_first_day(getdate(posting_date))
 	return frappe.db.sql(
 		"""
-		select name, state, period_start, period_end
+		select name, state, period_start, period_end, revalidation_required
 		from `tabMonthly Close`
 		where company = %(company)s and period_start > %(month_start)s and state in %(states)s
 		order by period_start asc
