@@ -1,0 +1,32 @@
+{
+ "actions": [],
+ "creation": "2026-07-20 12:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "role"
+ ],
+ "fields": [
+  {
+   "fieldname": "role",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Role",
+   "options": "Role",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-21 11:29:33.405104",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Gate Pass Notify Role",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

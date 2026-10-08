@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "creation": "2026-10-07 10:00:00",
+ "description": "Global switch and defaults for Monthly Closing. Company rules live in each company's Monthly Close Policy.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "default_template",
+  "column_break_defaults",
+  "max_sample_rows",
+  "help_section",
+  "help_html"
+ ],
+ "fields": [
+  {
+   "default": "1",
+   "description": "Switching this off stops new closes, check runs and transitions. Months that are already closed stay locked and integrity monitoring continues.",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enable Monthly Closing"
+  },
+  {
+   "description": "Template copied into new company policies.",
+   "fieldname": "default_template",
+   "fieldtype": "Link",
+   "label": "Default Checklist Template",
+   "options": "Monthly Close Template"
+  },
+  {
+   "fieldname": "column_break_defaults",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "20",
+   "description": "How many example rows a check keeps with its result. Full detail is always in the linked report.",
+   "fieldname": "max_sample_rows",
+   "fieldtype": "Int",
+   "label": "Sample Rows per Finding",
+   "non_negative": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "help_section",
+   "fieldtype": "Section Break",
+   "label": "How Monthly Closing Works"
+  },
+  {
+   "fieldname": "help_html",
+   "fieldtype": "HTML",
+   "options": "<p>A Monthly Close coordinates month-end work for one company and one calendar month: checklist, automated checks, exceptions, review, approval, an enforced lock and a sealed evidence packet.</p><p>It does <b>not</b> create a Period Closing Voucher, zero income and expense accounts or post any entry. Hard close creates or re-enables an Accounting Period owned by the close; reopening disables only that period.</p>"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-07 10:00:00",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Monthly Close Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Close Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Close Preparer"
+  },
+  {
+   "read": 1,
+   "role": "Close Reviewer"
+  },
+  {
+   "read": 1,
+   "role": "Close Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

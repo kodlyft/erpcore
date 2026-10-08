@@ -1,0 +1,162 @@
+{
+ "actions": [],
+ "autoname": "MC-EVT-.#######",
+ "creation": "2026-10-07 10:00:00",
+ "description": "Append-only audit trail of a close. Rows are never updated or deleted.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "monthly_close",
+  "company",
+  "revision",
+  "event_type",
+  "column_break_head",
+  "event_time",
+  "actor",
+  "from_state",
+  "to_state",
+  "reference_section",
+  "reference_doctype",
+  "reference_name",
+  "details"
+ ],
+ "fields": [
+  {
+   "fieldname": "monthly_close",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Monthly Close",
+   "options": "Monthly Close",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revision",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Revision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "event_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "event_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Time",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_state",
+   "fieldtype": "Data",
+   "label": "From State",
+   "read_only": 1
+  },
+  {
+   "fieldname": "to_state",
+   "fieldtype": "Data",
+   "label": "To State",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_section",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference Type",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference",
+   "options": "reference_doctype",
+   "read_only": 1
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Code",
+   "label": "Details",
+   "options": "JSON",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-10-07 10:00:00",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Monthly Close Event",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Manager"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Close Preparer"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Close Reviewer"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

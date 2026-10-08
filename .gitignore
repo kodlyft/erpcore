@@ -53,3 +53,8 @@ jspm_packages/
 
 # Aider AI Chat
 .aider*
+
+# Cypress
+cypress/screenshots
+cypress/videos
+cypressVideos

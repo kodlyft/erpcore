@@ -1,0 +1,297 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-07-20 12:00:00",
+ "description": "Records returnable material coming back against a gate pass. Follows the Purchase Order to Purchase Receipt idiom: a separate document per return, so each one carries its own date, gate and guard.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "return_against",
+  "company",
+  "column_break_main",
+  "status",
+  "posting_date",
+  "posting_time",
+  "gate",
+  "party_section",
+  "party_type",
+  "party",
+  "party_name",
+  "column_break_party",
+  "carrying_by",
+  "vehicle_no",
+  "driver_name",
+  "items_section",
+  "items",
+  "totals_section",
+  "total_returned_qty",
+  "security_section",
+  "checked_in_at",
+  "received_by",
+  "column_break_security",
+  "guard_verified",
+  "guard_remarks",
+  "remarks",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "GPR-.YYYY.-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "GPR-.YYYY.-.#####",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "return_against",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Against Gate Pass",
+   "options": "Gate Pass",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fetch_from": "return_against.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Draft\nSubmitted\nCancelled",
+   "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Return Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "posting_time",
+   "fieldtype": "Time",
+   "label": "Return Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "gate",
+   "fieldtype": "Link",
+   "label": "Gate",
+   "options": "Gate"
+  },
+  {
+   "fieldname": "party_section",
+   "fieldtype": "Section Break",
+   "label": "Party"
+  },
+  {
+   "fetch_from": "return_against.party_type",
+   "fieldname": "party_type",
+   "fieldtype": "Link",
+   "label": "Party Type",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "return_against.party",
+   "fieldname": "party",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Party",
+   "options": "party_type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "return_against.party_name",
+   "fieldname": "party_name",
+   "fieldtype": "Data",
+   "label": "Party Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_party",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The person physically bringing the material back.",
+   "fieldname": "carrying_by",
+   "fieldtype": "Data",
+   "label": "Carrying By",
+   "reqd": 1
+  },
+  {
+   "fieldname": "vehicle_no",
+   "fieldtype": "Data",
+   "label": "Vehicle No"
+  },
+  {
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "label": "Driver Name"
+  },
+  {
+   "fieldname": "items_section",
+   "fieldtype": "Section Break",
+   "label": "Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Gate Pass Return Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "totals_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_returned_qty",
+   "fieldtype": "Float",
+   "label": "Total Returned Qty",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.docstatus==1",
+   "fieldname": "security_section",
+   "fieldtype": "Section Break",
+   "label": "Security"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "checked_in_at",
+   "fieldtype": "Datetime",
+   "label": "Checked In At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_by",
+   "fieldtype": "Link",
+   "label": "Received By",
+   "options": "User"
+  },
+  {
+   "fieldname": "column_break_security",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "guard_verified",
+   "fieldtype": "Check",
+   "label": "Guard Verified",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "guard_remarks",
+   "fieldtype": "Small Text",
+   "label": "Guard Remarks",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Gate Pass Return",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-07-21 11:27:52.582233",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Gate Pass Return",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Gate Pass Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Gate Pass User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Gate Keeper",
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

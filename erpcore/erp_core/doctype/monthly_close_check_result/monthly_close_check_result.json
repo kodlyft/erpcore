@@ -1,0 +1,121 @@
+{
+ "actions": [],
+ "creation": "2026-10-07 10:00:00",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "check_id",
+  "check_label",
+  "check_version",
+  "severity",
+  "status",
+  "message",
+  "count",
+  "amount",
+  "tolerance",
+  "samples",
+  "route",
+  "evaluated_at",
+  "finding_signature"
+ ],
+ "fields": [
+  {
+   "fieldname": "check_id",
+   "fieldtype": "Data",
+   "label": "Check ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "check_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Check",
+   "read_only": 1
+  },
+  {
+   "fieldname": "check_version",
+   "fieldtype": "Int",
+   "label": "Check Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Data",
+   "label": "Configured Severity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Result",
+   "options": "Passed\nWarning\nBlocker\nNot Applicable\nError",
+   "read_only": 1
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Message",
+   "read_only": 1
+  },
+  {
+   "fieldname": "count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Float",
+   "label": "Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tolerance",
+   "fieldtype": "Float",
+   "label": "Tolerance Applied",
+   "read_only": 1
+  },
+  {
+   "description": "A bounded sample. Full detail is in the linked report.",
+   "fieldname": "samples",
+   "fieldtype": "Code",
+   "label": "Samples",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "route",
+   "fieldtype": "Data",
+   "label": "Drill-down",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evaluated_at",
+   "fieldtype": "Datetime",
+   "label": "Evaluated At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finding_signature",
+   "fieldtype": "Data",
+   "label": "Finding Signature",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-07 10:00:00",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Monthly Close Check Result",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,508 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-07-20 12:00:00",
+ "description": "Records material physically crossing a site boundary. A security document, not a stock document: the ledger stays with Purchase Receipt, Delivery Note and Stock Entry.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "company",
+  "direction",
+  "returnable",
+  "pass_type",
+  "column_break_main",
+  "status",
+  "posting_date",
+  "posting_time",
+  "gate",
+  "department",
+  "expected_return_date",
+  "party_section",
+  "party_type",
+  "party",
+  "party_name",
+  "column_break_party",
+  "carrying_by",
+  "for_machine",
+  "purpose",
+  "logistics_section",
+  "vehicle",
+  "vehicle_no",
+  "driver",
+  "driver_name",
+  "driver_contact",
+  "column_break_logistics",
+  "transporter",
+  "lr_no",
+  "lr_date",
+  "challan_no",
+  "items_section",
+  "items",
+  "totals_section",
+  "total_items",
+  "column_break_totals",
+  "total_qty",
+  "security_section",
+  "checked_in_at",
+  "checked_out_at",
+  "checked_by",
+  "column_break_security",
+  "guard_verified",
+  "guard_remarks",
+  "return_status_section",
+  "return_status",
+  "per_returned",
+  "column_break_return",
+  "actual_return_date",
+  "approval_section",
+  "prepared_by",
+  "checked_by_user",
+  "column_break_approval",
+  "approved_by",
+  "remarks",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "GP-IGP-.YYYY.-.#####\nGP-OGP-.YYYY.-.#####\nGP-RGP-.YYYY.-.#####\nGP-NRGP-.YYYY.-.#####",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "Outward",
+   "description": "Inward means goods arriving on site, Outward means goods leaving.",
+   "fieldname": "direction",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Direction",
+   "options": "Inward\nOutward",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "Tick when the material is expected back, e.g. tools out for repair.",
+   "fieldname": "returnable",
+   "fieldtype": "Check",
+   "label": "Returnable"
+  },
+  {
+   "description": "IGP, OGP, RGP or NRGP, derived from Direction and Returnable.",
+   "fieldname": "pass_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Pass Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Draft\nPending Approval\nApproved\nAt Gate\nExited\nReceived\nPartly Returned\nReturned\nOverdue\nClosed\nCancelled\nRejected",
+   "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "posting_time",
+   "fieldtype": "Time",
+   "label": "Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "gate",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Gate",
+   "options": "Gate"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "depends_on": "returnable",
+   "fieldname": "expected_return_date",
+   "fieldtype": "Date",
+   "label": "Expected Return Date",
+   "mandatory_depends_on": "returnable"
+  },
+  {
+   "fieldname": "party_section",
+   "fieldtype": "Section Break",
+   "label": "Party"
+  },
+  {
+   "default": "Supplier",
+   "description": "Leave blank for a walk-in party with no master record, and just type the name below.",
+   "fieldname": "party_type",
+   "fieldtype": "Link",
+   "label": "Party Type",
+   "options": "DocType"
+  },
+  {
+   "depends_on": "party_type",
+   "fieldname": "party",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Party",
+   "mandatory_depends_on": "party_type",
+   "options": "party_type"
+  },
+  {
+   "description": "Filled from the party when one is linked; type it directly for a walk-in.",
+   "fieldname": "party_name",
+   "fieldtype": "Data",
+   "label": "Party Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_party",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The person physically carrying the goods, who is often not the driver.",
+   "fieldname": "carrying_by",
+   "fieldtype": "Data",
+   "label": "Carrying By",
+   "reqd": 1
+  },
+  {
+   "depends_on": "returnable",
+   "description": "Machine or asset the material belongs to, for repair passes.",
+   "fieldname": "for_machine",
+   "fieldtype": "Link",
+   "label": "For Machine",
+   "options": "Asset"
+  },
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Small Text",
+   "label": "Purpose",
+   "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "logistics_section",
+   "fieldtype": "Section Break",
+   "label": "Vehicle & Transport"
+  },
+  {
+   "fieldname": "vehicle",
+   "fieldtype": "Link",
+   "label": "Vehicle",
+   "options": "Vehicle"
+  },
+  {
+   "description": "Registration number. Fetched from the Vehicle master, or typed directly for a one-off vehicle.",
+   "fieldname": "vehicle_no",
+   "fieldtype": "Data",
+   "label": "Vehicle No"
+  },
+  {
+   "fieldname": "driver",
+   "fieldtype": "Link",
+   "label": "Driver",
+   "options": "Driver"
+  },
+  {
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "label": "Driver Name"
+  },
+  {
+   "fetch_from": "driver.cell_number",
+   "fetch_if_empty": 1,
+   "fieldname": "driver_contact",
+   "fieldtype": "Data",
+   "label": "Driver Contact"
+  },
+  {
+   "fieldname": "column_break_logistics",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "transporter",
+   "fieldtype": "Link",
+   "label": "Transporter",
+   "options": "Supplier"
+  },
+  {
+   "description": "Bilty or consignment note number.",
+   "fieldname": "lr_no",
+   "fieldtype": "Data",
+   "label": "LR / Bilty No"
+  },
+  {
+   "fieldname": "lr_date",
+   "fieldtype": "Date",
+   "label": "LR / Bilty Date"
+  },
+  {
+   "fieldname": "challan_no",
+   "fieldtype": "Data",
+   "label": "Challan No"
+  },
+  {
+   "fieldname": "items_section",
+   "fieldtype": "Section Break",
+   "label": "Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Gate Pass Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "totals_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_items",
+   "fieldtype": "Int",
+   "label": "Total Items",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_totals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_qty",
+   "fieldtype": "Float",
+   "label": "Total Quantity",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.docstatus==1",
+   "fieldname": "security_section",
+   "fieldtype": "Section Break",
+   "label": "Security"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "checked_in_at",
+   "fieldtype": "Datetime",
+   "label": "Checked In At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "checked_out_at",
+   "fieldtype": "Datetime",
+   "label": "Checked Out At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "checked_by",
+   "fieldtype": "Link",
+   "label": "Checked By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_security",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "guard_verified",
+   "fieldtype": "Check",
+   "label": "Guard Verified",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "guard_remarks",
+   "fieldtype": "Small Text",
+   "label": "Guard Remarks",
+   "no_copy": 1
+  },
+  {
+   "depends_on": "eval:doc.returnable && doc.docstatus==1",
+   "fieldname": "return_status_section",
+   "fieldtype": "Section Break",
+   "label": "Return Tracking"
+  },
+  {
+   "default": "Not Returned",
+   "fieldname": "return_status",
+   "fieldtype": "Select",
+   "label": "Return Status",
+   "no_copy": 1,
+   "options": "Not Returned\nPartly Returned\nFully Returned",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "per_returned",
+   "fieldtype": "Percent",
+   "label": "% Returned",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_return",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "actual_return_date",
+   "fieldtype": "Date",
+   "label": "Actual Return Date",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "approval_section",
+   "fieldtype": "Section Break",
+   "label": "Authorisation"
+  },
+  {
+   "fieldname": "prepared_by",
+   "fieldtype": "Link",
+   "label": "Prepared By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "checked_by_user",
+   "fieldtype": "Link",
+   "label": "Checked By (Office)",
+   "options": "User"
+  },
+  {
+   "fieldname": "column_break_approval",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Gate Pass",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-07-21 11:23:55.473281",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Gate Pass",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Gate Pass Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Gate Pass User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Gate Keeper"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "track_seen": 1
+}

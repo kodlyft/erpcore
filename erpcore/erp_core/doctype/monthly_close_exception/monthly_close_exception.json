@@ -1,0 +1,235 @@
+{
+ "actions": [],
+ "autoname": "MC-EXC-.#####",
+ "creation": "2026-10-07 10:00:00",
+ "description": "An approved explanation for one specific finding of one revision. It never changes the finding itself, and applies only while the finding is identical.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "monthly_close",
+  "company",
+  "revision",
+  "check_run",
+  "check_result",
+  "column_break_ref",
+  "status",
+  "check_id",
+  "check_label",
+  "finding_status",
+  "finding_section",
+  "finding_message",
+  "finding_signature",
+  "justification_section",
+  "explanation",
+  "evidence",
+  "expires_on",
+  "decision_section",
+  "requested_by",
+  "decided_by",
+  "decided_at",
+  "column_break_decision",
+  "decision_note",
+  "self_approval_used"
+ ],
+ "fields": [
+  {
+   "fieldname": "monthly_close",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Monthly Close",
+   "options": "Monthly Close",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revision",
+   "fieldtype": "Int",
+   "label": "Revision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "check_run",
+   "fieldtype": "Link",
+   "label": "Check Run",
+   "options": "Monthly Close Check Run",
+   "read_only": 1
+  },
+  {
+   "fieldname": "check_result",
+   "fieldtype": "Data",
+   "label": "Result Row",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ref",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Requested\nApproved\nRejected\nSuperseded",
+   "read_only": 1
+  },
+  {
+   "fieldname": "check_id",
+   "fieldtype": "Data",
+   "label": "Check ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "check_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Check",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finding_status",
+   "fieldtype": "Data",
+   "label": "Finding Result",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finding_section",
+   "fieldtype": "Section Break",
+   "label": "Finding"
+  },
+  {
+   "fieldname": "finding_message",
+   "fieldtype": "Small Text",
+   "label": "Finding",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finding_signature",
+   "fieldtype": "Data",
+   "label": "Finding Signature",
+   "read_only": 1
+  },
+  {
+   "fieldname": "justification_section",
+   "fieldtype": "Section Break",
+   "label": "Justification"
+  },
+  {
+   "fieldname": "explanation",
+   "fieldtype": "Small Text",
+   "label": "Explanation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence",
+   "fieldtype": "Attach",
+   "label": "Evidence",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expires_on",
+   "fieldtype": "Date",
+   "label": "Expires On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_section",
+   "fieldtype": "Section Break",
+   "label": "Decision"
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Link",
+   "label": "Decided By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "fieldtype": "Datetime",
+   "label": "Decided At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_decision",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "decision_note",
+   "fieldtype": "Small Text",
+   "label": "Decision Note",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "self_approval_used",
+   "fieldtype": "Check",
+   "label": "Self-Approval Policy Used",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-10-07 10:00:00",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Monthly Close Exception",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Manager"
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Preparer"
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Reviewer"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

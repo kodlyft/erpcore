@@ -12,6 +12,42 @@ def after_migrate():
 	setup_roles()
 	seed_void_reasons()
 	create_indexes()
+	ensure_settings_defaults()
+	setup_workflows()
+	setup_monthly_close()
+
+
+SINGLE_DOCTYPES = ("Cheque Settings", "Gate Pass Settings", "Monthly Close Settings")
+
+
+def setup_monthly_close():
+	from erpcore.erp_core.monthly_close.install import after_migrate as monthly_close_after_migrate
+
+	monthly_close_after_migrate()
+
+
+def ensure_settings_defaults():
+	for doctype in SINGLE_DOCTYPES:
+		if not frappe.db.exists("DocType", doctype):
+			continue
+
+		if frappe.db.exists("Singles", {"doctype": doctype}):
+			continue
+
+		doc = frappe.get_doc(doctype)
+		for df in frappe.get_meta(doctype).fields:
+			if df.default not in (None, "") and doc.get(df.fieldname) in (None, ""):
+				doc.set(df.fieldname, df.default)
+
+		doc.flags.ignore_permissions = True
+		doc.save()
+
+
+def setup_workflows():
+	"""Install the Gate Pass approval workflow if the setting asks for it."""
+	from erpcore.erp_core.workflows import setup_gate_pass_workflow
+
+	setup_gate_pass_workflow()
 
 
 def setup_custom_fields():
@@ -38,6 +74,12 @@ def _target_exists(definition):
 
 
 def get_custom_fields():
+	from erpcore.erp_core.monthly_close.install import custom_fields as monthly_close_fields
+
+	return {**_cheque_custom_fields(), **monthly_close_fields()}
+
+
+def _cheque_custom_fields():
 	return {
 		"Payment Entry": [
 			{

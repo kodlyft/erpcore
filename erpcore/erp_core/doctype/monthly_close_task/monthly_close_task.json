@@ -1,0 +1,247 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-07 10:00:00",
+ "description": "One checklist obligation of a close revision. Its definition is frozen from the template; only progress, assignee, notes and evidence change.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "monthly_close",
+  "company",
+  "revision",
+  "task_key",
+  "column_break_ref",
+  "status",
+  "assigned_to",
+  "assigned_role",
+  "due_date",
+  "definition_section",
+  "title",
+  "category",
+  "description",
+  "column_break_def",
+  "is_mandatory",
+  "evidence_required",
+  "manual_certification",
+  "depends_on",
+  "work_section",
+  "notes",
+  "evidence",
+  "column_break_work",
+  "completed_by",
+  "completed_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "monthly_close",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Monthly Close",
+   "options": "Monthly Close",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fetch_from": "monthly_close.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revision",
+   "fieldtype": "Int",
+   "label": "Revision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "task_key",
+   "fieldtype": "Data",
+   "label": "Key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ref",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Open\nDone\nNot Applicable",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Assigned To",
+   "options": "User"
+  },
+  {
+   "fieldname": "assigned_role",
+   "fieldtype": "Link",
+   "label": "Assigned Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Due Date"
+  },
+  {
+   "fieldname": "definition_section",
+   "fieldtype": "Section Break",
+   "label": "Task"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "Preparation\nReconciliation\nAccruals\nTax\nPayroll\nIntercompany\nReview\nApproval\nOther"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Instructions",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_def",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_mandatory",
+   "fieldtype": "Check",
+   "label": "Mandatory",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "evidence_required",
+   "fieldtype": "Check",
+   "label": "Evidence Required",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Manual Review: certified by a person, not verified by the system.",
+   "fieldname": "manual_certification",
+   "fieldtype": "Check",
+   "label": "Manual Certification",
+   "read_only": 1
+  },
+  {
+   "fieldname": "depends_on",
+   "fieldtype": "Data",
+   "label": "Depends On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "work_section",
+   "fieldtype": "Section Break",
+   "label": "Work"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "description": "Attach as a private file. Evidence is visible only to users who can see this close.",
+   "fieldname": "evidence",
+   "fieldtype": "Attach",
+   "label": "Evidence"
+  },
+  {
+   "fieldname": "column_break_work",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "completed_by",
+   "fieldtype": "Link",
+   "label": "Completed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "label": "Completed At",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-07 10:00:00",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Monthly Close Task",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Preparer",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Reviewer"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}

@@ -1,0 +1,197 @@
+{
+ "actions": [],
+ "autoname": "MC-SNAP-.#####",
+ "creation": "2026-10-07 10:00:00",
+ "description": "A report captured when a close was sealed. The file is private and its SHA-256 is recorded. After a reopen the record is marked Superseded, never overwritten.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "monthly_close",
+  "company",
+  "revision",
+  "status",
+  "column_break_head",
+  "report_name",
+  "scope",
+  "from_date",
+  "to_date",
+  "integrity_section",
+  "file",
+  "sha256",
+  "row_count",
+  "column_break_integrity",
+  "generated_at",
+  "app_versions",
+  "filters_section",
+  "filters_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "monthly_close",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Monthly Close",
+   "options": "Monthly Close",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revision",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Revision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Original\nSuperseded",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "report_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Report",
+   "read_only": 1
+  },
+  {
+   "description": "Month, Year to Date or As at Month End. Year-to-date and monthly figures are never mixed.",
+   "fieldname": "scope",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Scope",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From",
+   "read_only": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To",
+   "read_only": 1
+  },
+  {
+   "fieldname": "integrity_section",
+   "fieldtype": "Section Break",
+   "label": "File and Integrity"
+  },
+  {
+   "fieldname": "file",
+   "fieldtype": "Attach",
+   "label": "Snapshot File",
+   "read_only": 1
+  },
+  {
+   "description": "Detects alteration of the file. Not a legal signature, and no protection against database or server administrators.",
+   "fieldname": "sha256",
+   "fieldtype": "Data",
+   "label": "SHA-256",
+   "read_only": 1
+  },
+  {
+   "fieldname": "row_count",
+   "fieldtype": "Int",
+   "label": "Rows",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_integrity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "generated_at",
+   "fieldtype": "Datetime",
+   "label": "Generated At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "app_versions",
+   "fieldtype": "Code",
+   "label": "App Versions",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "filters_section",
+   "fieldtype": "Section Break",
+   "label": "Report Filters"
+  },
+  {
+   "fieldname": "filters_json",
+   "fieldtype": "Code",
+   "label": "Filters",
+   "options": "JSON",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-10-07 10:00:00",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Monthly Close Snapshot",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Manager"
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Preparer"
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Reviewer"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -1,0 +1,253 @@
+{
+ "actions": [],
+ "autoname": "MC-BANK-.#####",
+ "creation": "2026-10-07 10:00:00",
+ "description": "Bank reconciliation workpaper for one account and one close revision. Balances come from the ledger and ERPNext's bank reconciliation logic; the statement and explanation come from the preparer; a reviewer certifies it.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "monthly_close",
+  "company",
+  "revision",
+  "bank_account",
+  "account",
+  "account_currency",
+  "column_break_head",
+  "status",
+  "period_end",
+  "prepared_by",
+  "certified_by",
+  "certified_at",
+  "ledger_section",
+  "ledger_balance",
+  "outstanding_receipts",
+  "outstanding_payments",
+  "incorrectly_cleared",
+  "expected_statement_balance",
+  "column_break_statement",
+  "statement_date",
+  "statement_balance",
+  "statement_file",
+  "unexplained_difference",
+  "difference_explanation"
+ ],
+ "fields": [
+  {
+   "fieldname": "monthly_close",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Monthly Close",
+   "options": "Monthly Close",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fetch_from": "monthly_close.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revision",
+   "fieldtype": "Int",
+   "label": "Revision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bank_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Bank Account",
+   "options": "Bank Account",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fetch_from": "bank_account.account",
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "label": "GL Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "account_currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nCertified",
+   "read_only": 1
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "As At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_by",
+   "fieldtype": "Link",
+   "label": "Prepared By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "certified_by",
+   "fieldtype": "Link",
+   "label": "Certified By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "certified_at",
+   "fieldtype": "Datetime",
+   "label": "Certified At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ledger_section",
+   "fieldtype": "Section Break",
+   "label": "Reconciliation"
+  },
+  {
+   "fieldname": "ledger_balance",
+   "fieldtype": "Currency",
+   "label": "Balance per Ledger",
+   "options": "account_currency",
+   "read_only": 1
+  },
+  {
+   "description": "Deposits in the ledger by month end, not yet cleared by the bank.",
+   "fieldname": "outstanding_receipts",
+   "fieldtype": "Currency",
+   "label": "Deposits Not Yet Cleared",
+   "options": "account_currency",
+   "read_only": 1
+  },
+  {
+   "description": "Cheques and payments in the ledger by month end, not yet presented. Normal; not an error.",
+   "fieldname": "outstanding_payments",
+   "fieldtype": "Currency",
+   "label": "Payments Not Yet Presented",
+   "options": "account_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "incorrectly_cleared",
+   "fieldtype": "Currency",
+   "label": "Cleared Before Posting",
+   "options": "account_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expected_statement_balance",
+   "fieldtype": "Currency",
+   "label": "Expected Statement Balance",
+   "options": "account_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_statement",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "statement_date",
+   "fieldtype": "Date",
+   "label": "Statement Date"
+  },
+  {
+   "fieldname": "statement_balance",
+   "fieldtype": "Currency",
+   "label": "Statement Closing Balance",
+   "options": "account_currency"
+  },
+  {
+   "description": "The bank statement, attached as a private file.",
+   "fieldname": "statement_file",
+   "fieldtype": "Attach",
+   "label": "Statement"
+  },
+  {
+   "fieldname": "unexplained_difference",
+   "fieldtype": "Currency",
+   "label": "Difference",
+   "options": "account_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "difference_explanation",
+   "fieldtype": "Small Text",
+   "label": "Explanation of Difference"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-07 10:00:00",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Monthly Close Bank Certification",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Preparer",
+   "write": 1
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Reviewer"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

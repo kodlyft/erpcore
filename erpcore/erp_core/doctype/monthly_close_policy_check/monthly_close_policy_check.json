@@ -1,0 +1,60 @@
+{
+ "actions": [],
+ "creation": "2026-10-07 10:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "check_id",
+  "enabled",
+  "severity",
+  "tolerance"
+ ],
+ "fields": [
+  {
+   "description": "Registered check identifier. Only registered checks run; nothing here is evaluated as code.",
+   "fieldname": "check_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Check",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "default": "Warning",
+   "description": "Blocker findings stop review and hard close unless an exception is approved.",
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Severity",
+   "options": "Warning\nBlocker"
+  },
+  {
+   "default": "0",
+   "description": "Materiality in company currency, for checks that measure an amount. Separate from rounding precision.",
+   "fieldname": "tolerance",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Tolerance",
+   "non_negative": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-07 10:00:00",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Monthly Close Policy Check",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

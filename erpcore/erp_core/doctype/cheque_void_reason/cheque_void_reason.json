@@ -4,7 +4,7 @@
  "allow_rename": 1,
  "autoname": "field:reason_name",
  "creation": "2026-07-20 12:00:00",
- "description": "SAP-style void reason codes. A master rather than a Select because reasons are reported on and differ per client.",
+ "description": "A master rather than a Select because reasons are reported on and differ per client.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -45,10 +45,11 @@
   }
  ],
  "links": [],
- "modified": "2026-07-20 22:54:11.030688",
+ "modified": "2026-07-21 11:18:28.796251",
  "modified_by": "Administrator",
  "module": "ERP Core",
  "name": "Cheque Void Reason",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -85,5 +86,6 @@
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

@@ -1,0 +1,123 @@
+{
+ "actions": [],
+ "creation": "2026-07-20 12:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "gate_pass_item",
+  "item_code",
+  "item_name",
+  "description",
+  "column_break_qty",
+  "original_qty",
+  "previously_returned_qty",
+  "pending_qty",
+  "returned_qty",
+  "uom",
+  "condition_section",
+  "item_condition",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "description": "The row on the original gate pass this return settles.",
+   "fieldname": "gate_pass_item",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Gate Pass Item Row",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_qty",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "original_qty",
+   "fieldtype": "Float",
+   "label": "Original Qty",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "previously_returned_qty",
+   "fieldtype": "Float",
+   "label": "Previously Returned",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "pending_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Pending Qty",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "returned_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Returning Now",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "UOM",
+   "options": "UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "condition_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "Good",
+   "fieldname": "item_condition",
+   "fieldtype": "Select",
+   "label": "Condition",
+   "options": "Good\nDamaged\nScrap\nShort"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Data",
+   "label": "Remarks"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-21 11:29:50.882322",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Gate Pass Return Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

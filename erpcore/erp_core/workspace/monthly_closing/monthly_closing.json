@@ -1,0 +1,291 @@
+{
+ "app": "erpcore",
+ "charts": [],
+ "content": "[{\"id\":\"mcsc000000\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Monthly Close\",\"col\":3}},{\"id\":\"mcsc000001\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Monthly Close Task\",\"col\":3}},{\"id\":\"mcsc000002\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Monthly Close Status\",\"col\":3}},{\"id\":\"mcsc000003\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Monthly Close Lock Integrity\",\"col\":3}},{\"id\":\"mcspacer01\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"mccard0000\",\"type\":\"card\",\"data\":{\"card_name\":\"Closing\",\"col\":4}},{\"id\":\"mccard0001\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"mccard0002\",\"type\":\"card\",\"data\":{\"card_name\":\"Evidence\",\"col\":4}},{\"id\":\"mccard0003\",\"type\":\"card\",\"data\":{\"card_name\":\"Setup\",\"col\":4}}]",
+ "creation": "2026-10-07 10:00:00",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "idx": 0,
+ "indicator_color": "blue",
+ "is_hidden": 0,
+ "label": "Monthly Closing",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Closing",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monthly Close",
+   "link_count": 0,
+   "link_to": "Monthly Close",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monthly Close Task",
+   "link_count": 0,
+   "link_to": "Monthly Close Task",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monthly Close Bank Certification",
+   "link_count": 0,
+   "link_to": "Monthly Close Bank Certification",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monthly Close Exception",
+   "link_count": 0,
+   "link_to": "Monthly Close Exception",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monthly Close Reopen Request",
+   "link_count": 0,
+   "link_to": "Monthly Close Reopen Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 6,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Monthly Close Status",
+   "link_count": 0,
+   "link_to": "Monthly Close Status",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Monthly Close Outstanding Tasks",
+   "link_count": 0,
+   "link_to": "Monthly Close Outstanding Tasks",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Monthly Close Exceptions",
+   "link_count": 0,
+   "link_to": "Monthly Close Exceptions",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Monthly Close Lock Integrity",
+   "link_count": 0,
+   "link_to": "Monthly Close Lock Integrity",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Monthly Close Audit Trail",
+   "link_count": 0,
+   "link_to": "Monthly Close Audit Trail",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Monthly Close Posting Coverage",
+   "link_count": 0,
+   "link_to": "Monthly Close Posting Coverage",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Evidence",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monthly Close Check Run",
+   "link_count": 0,
+   "link_to": "Monthly Close Check Run",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monthly Close Snapshot",
+   "link_count": 0,
+   "link_to": "Monthly Close Snapshot",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monthly Close Event",
+   "link_count": 0,
+   "link_to": "Monthly Close Event",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Setup",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monthly Close Policy",
+   "link_count": 0,
+   "link_to": "Monthly Close Policy",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monthly Close Template",
+   "link_count": 0,
+   "link_to": "Monthly Close Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monthly Close Settings",
+   "link_count": 0,
+   "link_to": "Monthly Close Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Accounting Period",
+   "link_count": 0,
+   "link_to": "Accounting Period",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-10-07 10:00:00",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Monthly Closing",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Close Manager"
+  },
+  {
+   "role": "Close Preparer"
+  },
+  {
+   "role": "Close Reviewer"
+  },
+  {
+   "role": "Close Auditor"
+  }
+ ],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Monthly Close",
+   "link_to": "Monthly Close",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Monthly Close Task",
+   "link_to": "Monthly Close Task",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "label": "Monthly Close Status",
+   "link_to": "Monthly Close Status",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "label": "Monthly Close Lock Integrity",
+   "link_to": "Monthly Close Lock Integrity",
+   "type": "Report"
+  }
+ ],
+ "title": "Monthly Closing",
+ "type": "Workspace"
+}

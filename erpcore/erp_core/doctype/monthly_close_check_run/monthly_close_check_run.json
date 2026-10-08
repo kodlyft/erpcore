@@ -1,0 +1,234 @@
+{
+ "actions": [],
+ "autoname": "MC-RUN-.#####",
+ "creation": "2026-10-07 10:00:00",
+ "description": "Durable record of one evaluation of the close checks. Written only by the close service.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "monthly_close",
+  "company",
+  "revision",
+  "policy_version",
+  "purpose",
+  "column_break_head",
+  "status",
+  "requested_by",
+  "job_id",
+  "attempts",
+  "started_at",
+  "finished_at",
+  "summary_section",
+  "blockers",
+  "warnings",
+  "errors",
+  "column_break_summary",
+  "fingerprint",
+  "error",
+  "results_section",
+  "results",
+  "fingerprint_section",
+  "fingerprint_components"
+ ],
+ "fields": [
+  {
+   "fieldname": "monthly_close",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Monthly Close",
+   "options": "Monthly Close",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revision",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Revision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "policy_version",
+   "fieldtype": "Int",
+   "label": "Policy Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Select",
+   "label": "Purpose",
+   "options": "Background\nFinal",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Queued\nRunning\nCompleted\nFailed\nStale",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "job_id",
+   "fieldtype": "Data",
+   "label": "Job ID",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "attempts",
+   "fieldtype": "Int",
+   "label": "Attempts",
+   "read_only": 1
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finished_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Finished At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "summary_section",
+   "fieldtype": "Section Break",
+   "label": "Summary"
+  },
+  {
+   "default": "0",
+   "fieldname": "blockers",
+   "fieldtype": "Int",
+   "label": "Blockers",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "warnings",
+   "fieldtype": "Int",
+   "label": "Warnings",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "errors",
+   "fieldtype": "Int",
+   "label": "Errors",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_summary",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "fingerprint",
+   "fieldtype": "Data",
+   "label": "Fingerprint",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error",
+   "fieldtype": "Small Text",
+   "label": "Error",
+   "read_only": 1
+  },
+  {
+   "fieldname": "results_section",
+   "fieldtype": "Section Break",
+   "label": "Results"
+  },
+  {
+   "fieldname": "results",
+   "fieldtype": "Table",
+   "label": "Results",
+   "options": "Monthly Close Check Result",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "fingerprint_section",
+   "fieldtype": "Section Break",
+   "label": "Fingerprint Components"
+  },
+  {
+   "fieldname": "fingerprint_components",
+   "fieldtype": "Code",
+   "label": "Components",
+   "options": "JSON",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-10-07 10:00:00",
+ "modified_by": "Administrator",
+ "module": "ERP Core",
+ "name": "Monthly Close Check Run",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Manager"
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Preparer"
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Reviewer"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Close Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
