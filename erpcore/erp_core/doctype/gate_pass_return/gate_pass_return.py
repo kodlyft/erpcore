@@ -54,10 +54,19 @@ class GatePassReturn(Document):
 			self.return_against,
 			["docstatus", "returnable", "return_status", "company"],
 			as_dict=True,
+			for_update=True,
 		)
 
 		if not source:
 			frappe.throw(_("Gate Pass {0} does not exist.").format(self.return_against))
+
+		if self.company and self.company != source.company:
+			frappe.throw(
+				_("Gate Pass {0} belongs to company {1}, not {2}.").format(
+					frappe.bold(self.return_against), frappe.bold(source.company), frappe.bold(self.company)
+				)
+			)
+		self.company = source.company
 
 		if source.docstatus != 1:
 			frappe.throw(_("Gate Pass {0} is not submitted.").format(frappe.bold(self.return_against)))
@@ -89,6 +98,12 @@ class GatePassReturn(Document):
 				continue
 
 			returning_any = True
+			if row.gate_pass_item not in pending:
+				frappe.throw(
+					_("Row {0}: {1} is not an item of Gate Pass {2}.").format(
+						row.idx, frappe.bold(row.item_code or row.item_name), frappe.bold(self.return_against)
+					)
+				)
 			allowed = flt(pending.get(row.gate_pass_item, 0))
 
 			if flt(row.returned_qty) > allowed:
@@ -116,24 +131,22 @@ class GatePassReturn(Document):
 		)
 		originals = {row.name: flt(row.qty) for row in rows}
 
-		other_returns = frappe.get_all(
-			"Gate Pass Return",
-			filters={
-				"return_against": self.return_against,
-				"docstatus": 1,
-				"name": ["!=", self.name],
-			},
-			pluck="name",
-		)
-
+		ret = frappe.qb.DocType("Gate Pass Return")
+		item = frappe.qb.DocType("Gate Pass Return Item")
 		returned = {}
-		if other_returns:
-			for row in frappe.get_all(
-				"Gate Pass Return Item",
-				filters={"parent": ["in", other_returns], "parenttype": "Gate Pass Return"},
-				fields=["gate_pass_item", "returned_qty"],
-			):
-				returned[row.gate_pass_item] = returned.get(row.gate_pass_item, 0) + flt(row.returned_qty)
+		for row in (
+			frappe.qb.from_(item)
+			.inner_join(ret)
+			.on(ret.name == item.parent)
+			.select(item.gate_pass_item, item.returned_qty)
+			.where(item.parenttype == "Gate Pass Return")
+			.where(ret.return_against == self.return_against)
+			.where(ret.docstatus == 1)
+			.where(ret.name != (self.name or ""))
+			.for_update()
+			.run(as_dict=True)
+		):
+			returned[row.gate_pass_item] = returned.get(row.gate_pass_item, 0) + flt(row.returned_qty)
 
 		return {name: qty - flt(returned.get(name, 0)) for name, qty in originals.items()}
 

@@ -55,7 +55,6 @@ from erpcore.erp_core.monthly_close.lifecycle import (
 )
 from erpcore.erp_core.monthly_close.notifications import notify_after_commit, transition_message
 from erpcore.erp_core.monthly_close.permissions import require_different_actor, require_manager, require_role
-from erpcore.erp_core.monthly_close.posting_guard import acquire_close_gate
 
 
 def request_reopen(name: str, reason: str) -> str:
@@ -192,8 +191,7 @@ def lock_later_closes(close) -> list:
 	)
 	locked = []
 	for name in names:
-		acquire_close_gate(name)
-		locked.append(frappe.get_doc(CLOSE_DOCTYPE, name))
+		locked.append(frappe.get_doc(CLOSE_DOCTYPE, name, for_update=True))
 	return locked
 
 

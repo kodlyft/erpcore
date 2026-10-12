@@ -59,7 +59,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, add_to_date, cint, get_datetime, getdate, now_datetime
 
-from erpcore.erp_core.monthly_close import native_lock, snapshot, txn
+from erpcore.erp_core.monthly_close import fingerprint_legacy, native_lock, snapshot, txn
 from erpcore.erp_core.monthly_close.check_runner import blocking_results, run_checks_sync, service_write
 from erpcore.erp_core.monthly_close.constants import (
 	APPROVED,
@@ -604,12 +604,16 @@ def confirm_revalidation(name: str, comment: str | None = None) -> None:
 	)
 
 	run = run_checks_sync(close, policy, purpose="Revalidation")
-	closing_components = frappe.db.get_value(
-		"Monthly Close Check Run", close.closing_check_run, "fingerprint_components"
+	sealed = frappe.parse_json(
+		frappe.db.get_value("Monthly Close Check Run", close.closing_check_run, "fingerprint_components")
+		or "{}"
 	)
-	changed = changed_components(
-		closing_components, frappe.parse_json(run.fingerprint_components), only=FINANCIAL_COMPONENTS
+	current = (
+		fingerprint_legacy.financial_components(close)
+		if fingerprint_legacy.is_legacy(sealed)
+		else frappe.parse_json(run.fingerprint_components)
 	)
+	changed = changed_components(sealed, current, only=FINANCIAL_COMPONENTS)
 	if changed:
 		frappe.throw(
 			_(

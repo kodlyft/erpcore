@@ -57,7 +57,14 @@ def release_previous_leaf(doc):
 
 
 def validate_cheque_leaf(doc):
-	"""Layer 2 of the double-use guard. Returns the leaf's field values."""
+	"""Layer 2 of the double-use guard. Returns the leaf's field values.
+
+	The leaf is read with a locking read (FOR UPDATE) and stays locked until this
+	save commits. Two drafts saving the same leaf at once are serialised: the
+	second waits, then sees the first one's reservation (a locking read returns
+	the latest committed row, not this transaction's older snapshot) and is
+	refused, instead of both reading Unused and both reserving it.
+	"""
 	leaf = frappe.db.get_value(
 		"Cheque Leaf",
 		doc.cheque_leaf,
@@ -72,6 +79,7 @@ def validate_cheque_leaf(doc):
 			"cheque_date",
 		],
 		as_dict=True,
+		for_update=True,
 	)
 
 	if not leaf:

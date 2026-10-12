@@ -70,21 +70,9 @@ def required_doctypes() -> list[str]:
 
 
 def period_name_for(close) -> str:
-	"""`period_name` is unique across the whole site, not per company, so it carries the company.
-
-	The company name, not its abbreviation, keeps it stable and unique; it is
-	cut to fit the 140-character field, with a hash of the full name appended
-	when cutting, so two long names never collide.
-	"""
-	import hashlib
-
-	prefix = f"Monthly Close {month_label(close.period_start)} "
-	company = close.company
-	room = 140 - len(prefix) - len(" - ") - len(frappe.get_cached_value("Company", company, "abbr") or "")
-	if len(company) > room:
-		suffix = "~" + hashlib.sha256(company.encode()).hexdigest()[:8]
-		company = company[: room - len(suffix)] + suffix
-	return prefix + company
+	"""ERPNext names the period "<period_name> - <company abbr>", and Frappe keeps `period_name`
+	equal to that name (`_sync_autoname_field`), so the stored value is unique per company."""
+	return f"Monthly Close {month_label(close.period_start)}"
 
 
 def overlapping_periods(company: str, start, end) -> list[frappe._dict]:

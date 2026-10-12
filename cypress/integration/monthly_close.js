@@ -44,6 +44,17 @@ const review_approve_and_close = (name) => {
 const sealed_packet = (name, revision) =>
 	cy.call(`${API}.export_revision_packet`, { name, revision }).then((r) => r.message["Close Packet"]);
 
+const sealed_revision = (name, revision) =>
+	cy.call(`${API}.export_revision_packet`, { name, revision }).then((r) => r.message);
+
+// What must never change once sealed: file and hash of the manifest, packet and every report.
+const sealed_identity = (revision) =>
+	[revision["Close Manifest"], revision["Close Packet"], ...revision.reports].map((row) => ({
+		file: row.file,
+		sha256: row.sha256,
+		verified: row.verified,
+	}));
+
 describe("Monthly Close", () => {
 	let close;
 
@@ -100,25 +111,28 @@ describe("Monthly Close", () => {
 		cy.contains(".mc-dashboard", "Checklist (revision 2)").should("be.visible");
 	});
 
-	it("recloses revision 2 and keeps revision 1's packet as it was sealed", () => {
-		sealed_packet(close.name, 1).then((original) => {
+	it("recloses revision 2 and keeps revision 1's manifest, snapshots and packet as sealed", () => {
+		sealed_revision(close.name, 1).then((before) => {
+			expect(before.reports.length).to.be.greaterThan(0);
 			review_approve_and_close(close.name);
 			cy.field_value("Monthly Close", close.name, "revision").should("equal", 2);
 
-			sealed_packet(close.name, 1).then((packet) => {
-				expect(packet.file).to.equal(original.file);
-				expect(packet.sha256).to.equal(original.sha256);
-				expect(packet.verified).to.equal(true);
-				expect(packet.status).to.equal("Superseded");
+			sealed_revision(close.name, 1).then((after) => {
+				expect(sealed_identity(after)).to.deep.equal(sealed_identity(before));
+				sealed_identity(after).forEach((row) => expect(row.verified).to.equal(true));
+				[after["Close Manifest"], after["Close Packet"], ...after.reports].forEach((row) =>
+					expect(row.status).to.equal("Superseded"),
+				);
 			});
-			sealed_packet(close.name, 2).then((packet) => {
-				expect(packet.verified).to.equal(true);
-				expect(packet.status).to.equal("Original");
-				expect(packet.sha256).not.to.equal(original.sha256);
+			sealed_revision(close.name, 2).then((second) => {
+				sealed_identity(second).forEach((row) => expect(row.verified).to.equal(true));
+				expect(second["Close Packet"].status).to.equal("Original");
+				expect(second["Close Packet"].sha256).not.to.equal(before["Close Packet"].sha256);
+				expect(second.reports.length).to.equal(before.reports.length);
 			});
-
-			cy.open_doc("Monthly Close", close.name);
-			cy.contains(".mc-dashboard", "Healthy").should("be.visible");
 		});
+
+		cy.open_doc("Monthly Close", close.name);
+		cy.contains(".mc-dashboard", "Healthy").should("be.visible");
 	});
 });

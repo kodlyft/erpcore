@@ -138,33 +138,42 @@ def notify_overdue_gate_pass_returns():
 	overdue = frappe.get_all(
 		"Gate Pass",
 		filters={"docstatus": 1, "returnable": 1, "status": "Overdue"},
-		fields=["name", "party", "expected_return_date", "per_returned"],
+		fields=["name", "company", "party", "expected_return_date", "per_returned"],
 	)
 	if not overdue:
 		return
 
-	recipients = users_with_roles([row.role for row in settings.notify_roles])
-	if not recipients:
-		return
-
-	frappe.sendmail(
-		recipients=recipients,
-		subject=frappe._("{0} gate passes have material overdue for return").format(len(overdue)),
-		template=None,
-		message=overdue_digest_html(overdue),
-		reference_doctype="Gate Pass",
-	)
+	for recipient in users_with_roles([row.role for row in settings.notify_roles]):
+		rows = [
+			row for row in overdue if frappe.has_permission("Gate Pass", "read", doc=row.name, user=recipient)
+		]
+		if not rows:
+			continue
+		frappe.sendmail(
+			recipients=[recipient],
+			subject=frappe._("{0} gate passes have material overdue for return").format(len(rows)),
+			template=None,
+			message=overdue_digest_html(rows),
+			reference_doctype="Gate Pass",
+		)
 
 
 def users_with_roles(roles):
+	"""Enabled system users holding one of the roles."""
 	if not roles:
 		return []
 
-	return frappe.get_all(
+	users = frappe.get_all(
 		"Has Role",
 		filters={"role": ["in", roles], "parenttype": "User"},
 		pluck="parent",
 		distinct=True,
+	)
+	return frappe.get_all(
+		"User",
+		filters={"name": ["in", users or [""]], "enabled": 1, "user_type": "System User"},
+		pluck="name",
+		order_by="name",
 	)
 
 

@@ -251,9 +251,11 @@ class TestPostingPaths(MonthlyCloseTestCase):
 		names = [frappe.db.get_value("Accounting Period", p, "period_name") for p in periods]
 		self.assertEqual(len(set(periods)), 2)
 		self.assertEqual(len(set(names)), 2, names)
+		# ERPNext names a period "<period_name> - <company abbr>" and keeps period_name equal to the name,
+		# so the stored value is unique per company even though period_name is unique site-wide.
 		for close_name, period_name in zip((first, second), names, strict=True):
 			company = frappe.db.get_value("Monthly Close", close_name, "company")
-			self.assertIn(company, period_name)
+			self.assertTrue(period_name.endswith(" - " + frappe.get_cached_value("Company", company, "abbr")))
 
 		# Each company's month is locked, independently of the other.
 		self.assertRaises(frappe.ValidationError, make_je, add_days(month(3), 4), 10, True, TEST_COMPANY)

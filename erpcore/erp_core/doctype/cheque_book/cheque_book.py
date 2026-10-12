@@ -167,6 +167,8 @@ class ChequeBook(Document):
 			"erpcore.erp_core.doctype.cheque_book.cheque_book.generate_leaves",
 			queue="long",
 			timeout=1800,
+			job_id=generation_job_id(self.name),
+			deduplicate=True,
 			cheque_book=self.name,
 			enqueue_after_commit=True,
 		)
@@ -175,6 +177,18 @@ class ChequeBook(Document):
 			indicator="blue",
 			alert=True,
 		)
+
+	def before_cancel(self):
+		from frappe.utils.background_jobs import is_job_enqueued
+
+		status = frappe.db.get_value("Cheque Book", self.name, "generation_status", for_update=True)
+		if status in ("Queued", "In Progress") and is_job_enqueued(generation_job_id(self.name)):
+			frappe.throw(
+				_(
+					"Cheque leaves are still being generated for this book. Cancel it after generation finishes."
+				),
+				title=_("Generation Running"),
+			)
 
 	def on_cancel(self):
 		used = frappe.db.count("Cheque Leaf", {"cheque_book": self.name, "status": ["!=", LEAF_UNUSED]})
@@ -227,6 +241,10 @@ def update_counts(cheque_book):
 	frappe.db.set_value("Cheque Book", cheque_book, updates, update_modified=False)
 
 
+def generation_job_id(cheque_book: str) -> str:
+	return f"cheque-leaf-generation::{cheque_book}"
+
+
 def generate_leaves(cheque_book):
 	"""Create one Cheque Leaf per number in the book's range.
 
@@ -237,7 +255,9 @@ def generate_leaves(cheque_book):
 	bulk insert skips autoname, the creation/owner defaults and the search index,
 	so we would be reimplementing four things to save about a second.
 	"""
-	book = frappe.get_doc("Cheque Book", cheque_book)
+	book = frappe.get_doc("Cheque Book", cheque_book, for_update=True)
+	if book.docstatus != 1 or book.status == "Cancelled":
+		return
 	book.db_set("generation_status", "In Progress")
 
 	try:

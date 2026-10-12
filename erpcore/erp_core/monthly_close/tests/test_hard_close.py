@@ -454,3 +454,44 @@ def drive_to_approved_and_close(offset):
 	with as_user(MANAGER):
 		closing.request_hard_close(name)
 	return name
+
+
+class TestLegacySealedMonths(MonthlyCloseTestCase):
+	"""Months closed by a release before the current fingerprint format, revalidated after an upgrade."""
+
+	def seal_in_legacy_format(self, name: str):
+		from erpcore.erp_core.monthly_close import fingerprint_legacy
+
+		close = frappe.get_doc("Monthly Close", name)
+		components = fingerprint_legacy.financial_components(close)
+		components.update({"bank": "legacy", "policy": "legacy"})  # format 1 had no evidence component
+		frappe.db.set_value(
+			"Monthly Close Check Run",
+			close.closing_check_run,
+			"fingerprint_components",
+			frappe.as_json(components),
+			update_modified=False,
+		)
+
+	def test_unchanged_legacy_month_can_be_revalidated(self):
+		earlier = drive_to_closed(4)
+		later = drive_to_closed(3, cutover=False)
+		self.seal_in_legacy_format(later)
+		reopen_close(earlier)
+		reclose(earlier)
+		with as_user(REVIEWER):
+			closing.confirm_revalidation(later, "Agreed after the earlier month was reclosed")
+		self.assertFalse(frappe.db.get_value("Monthly Close", later, "revalidation_required"))
+
+	def test_changed_legacy_month_is_still_refused(self):
+		earlier = drive_to_closed(4)
+		later = drive_to_closed(3, cutover=False)
+		self.seal_in_legacy_format(later)
+		reopen_close(earlier)
+		make_je(add_days(month(4), 3), 55)  # changes the later month's balances brought forward
+		reclose(earlier)
+		with as_user(REVIEWER):
+			self.assertRaisesRegex(
+				frappe.ValidationError, "gl", closing.confirm_revalidation, later, "Looked fine"
+			)
+		self.assertTrue(frappe.db.get_value("Monthly Close", later, "revalidation_required"))

@@ -82,6 +82,7 @@ class TestChecksAccuracy(MonthlyCloseTestCase):
 				"voucher_type": "Journal Entry",
 				"voucher_no": "MC-TEST-UNBALANCED",
 				"is_cancelled": 0,
+				"is_opening": "No",
 			}
 		)
 		row = result(run_checks(name), "trial_balance")
@@ -421,5 +422,6 @@ def gl_pair(
 				"voucher_type": "Journal Entry",
 				"voucher_no": voucher_no,
 				"is_cancelled": 0,
+				"is_opening": "No",
 			}
 		)

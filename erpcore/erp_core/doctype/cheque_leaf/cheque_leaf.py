@@ -238,4 +238,23 @@ def get_available_leaves(
 	if filters.get("bank_account"):
 		query = query.where(leaf.bank_account == filters["bank_account"])
 
+	for fieldname, link_doctype in (("company", "Company"), ("bank_account", "Bank Account")):
+		permitted = permitted_values(link_doctype, "Cheque Leaf")
+		if permitted is not None:
+			query = query.where(leaf[fieldname].isin(permitted or [""]))
+
 	return query.run()
+
+
+def permitted_values(link_doctype: str, doctype: str, user: str | None = None) -> list[str] | None:
+	"""Values of `link_doctype` the user is restricted to for `doctype`, or None when unrestricted."""
+	user = user or frappe.session.user
+	if user == "Administrator":
+		return None
+	rows = frappe.defaults.get_user_permissions(user).get(link_doctype) or []
+	values = [
+		row.get("doc")
+		for row in rows
+		if row.get("doc") and (not row.get("applicable_for") or row.get("applicable_for") == doctype)
+	]
+	return values or None

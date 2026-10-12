@@ -168,19 +168,27 @@ def guard_later_stock_months(sle, what: str, later: list):
 
 
 def locked_closes_after(company: str, posting_date) -> list:
-	"""Locked closes ending on or after the date, share-locked in ascending month order."""
+	"""Locked closes after the posting month, in ascending month order.
+
+	Every later close row is share-locked, whatever its state, so a hard close of a
+	later month (FOR UPDATE on its row) waits for this posting and then sees it,
+	and a posting arriving during that hard close waits and then sees the lock.
+	The state is filtered afterwards, so the guarantee does not depend on which
+	index the optimiser uses for the scan.
+	"""
 	month_start = get_first_day(getdate(posting_date))
-	return frappe.db.sql(
+	rows = frappe.db.sql(
 		"""
 		select name, state, period_start, period_end, revalidation_required
 		from `tabMonthly Close`
-		where company = %(company)s and period_start > %(month_start)s and state in %(states)s
+		where company = %(company)s and period_start > %(month_start)s
 		order by period_start asc
 		lock in share mode
 		""",
-		{"company": company, "month_start": month_start, "states": LOCKED_STATES},
+		{"company": company, "month_start": month_start},
 		as_dict=True,
 	)
+	return [row for row in rows if row.state in LOCKED_STATES]
 
 
 def guard_repost(doc, method=None):

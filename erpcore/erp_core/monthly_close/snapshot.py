@@ -390,7 +390,7 @@ def seal_revision_packet(close, snapshot_names: list[str]) -> dict:
 
 
 def revision_packet(close_name: str, revision: int) -> dict:
-	"""The sealed packet of one revision: file URLs and hashes, verified. Never regenerated."""
+	"""The sealed manifest, packet and report snapshots of one revision, each re-verified. Never regenerated."""
 	result = {}
 	for kind in (MANIFEST, PACKET):
 		name = frappe.db.get_value(
@@ -403,6 +403,20 @@ def revision_packet(close_name: str, revision: int) -> dict:
 		row = frappe.db.get_value(SNAPSHOT_DOCTYPE, name, ["name", "file", "sha256", "status"], as_dict=True)
 		row["verified"] = verify(name)["ok"]
 		result[kind] = row
+	if result:
+		result["reports"] = [
+			{**row, "verified": verify(row.name)["ok"]}
+			for row in frappe.get_all(
+				SNAPSHOT_DOCTYPE,
+				filters={
+					"monthly_close": close_name,
+					"revision": cint(revision),
+					"report_name": ["not in", [MANIFEST, PACKET]],
+				},
+				fields=["name", "report_name", "scope", "file", "sha256", "status"],
+				order_by="report_name asc, scope asc",
+			)
+		]
 	return result
 
 

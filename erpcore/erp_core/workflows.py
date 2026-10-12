@@ -20,7 +20,12 @@ APPROVER_ROLE = "Gate Pass Manager"
 
 
 def setup_gate_pass_workflow():
-	"""Install, update or disable the workflow to match the current setting."""
+	"""Install or enable/disable the workflow to match the current setting.
+
+	Runs on every migrate. The shipped states and transitions are written only
+	when the workflow does not exist yet; an existing workflow keeps whatever an
+	administrator changed, and only its active flag follows the setting.
+	"""
 	if not frappe.db.exists("DocType", DOCTYPE):
 		return
 
@@ -31,12 +36,18 @@ def setup_gate_pass_workflow():
 		return
 
 	ensure_masters()
-	upsert_workflow()
+	if frappe.db.exists("Workflow", WORKFLOW_NAME):
+		if not frappe.db.get_value("Workflow", WORKFLOW_NAME, "is_active"):
+			frappe.db.set_value("Workflow", WORKFLOW_NAME, "is_active", 1)
+			frappe.clear_cache(doctype=DOCTYPE)
+		return
+	create_workflow()
 
 
 def disable_workflow():
-	if frappe.db.exists("Workflow", WORKFLOW_NAME):
+	if frappe.db.get_value("Workflow", WORKFLOW_NAME, "is_active"):
 		frappe.db.set_value("Workflow", WORKFLOW_NAME, "is_active", 0)
+		frappe.clear_cache(doctype=DOCTYPE)
 
 
 def ensure_masters():
@@ -102,14 +113,9 @@ def workflow_transitions():
 	]
 
 
-def upsert_workflow():
-	if frappe.db.exists("Workflow", WORKFLOW_NAME):
-		workflow = frappe.get_doc("Workflow", WORKFLOW_NAME)
-		workflow.states = []
-		workflow.transitions = []
-	else:
-		workflow = frappe.new_doc("Workflow")
-		workflow.workflow_name = WORKFLOW_NAME
+def create_workflow():
+	workflow = frappe.new_doc("Workflow")
+	workflow.workflow_name = WORKFLOW_NAME
 
 	workflow.document_type = DOCTYPE
 	workflow.workflow_state_field = "workflow_state"
